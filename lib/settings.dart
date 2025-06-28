@@ -143,6 +143,7 @@ class SettingsProvider with ChangeNotifier {
   static const String settingTransactionDateFilter = "TX_DATE_FILTER";
   static const String settingGeminiApiKey = "GEMINI_API_KEY";
   static const String settingGeminiModel = "GEMINI_MODEL";
+  static const String settingGeminiLanguage = "GEMINI_LANGUAGE";
 
   bool get debug => _loaded ? _boolSettings[BoolSettings.debug] : false;
   bool get lock => _loaded ? _boolSettings[BoolSettings.lock] : false;
@@ -198,6 +199,9 @@ class SettingsProvider with ChangeNotifier {
 
   String _geminiModel = "gemini-2.0-flash-exp";
   String get geminiModel => _geminiModel;
+
+  String _geminiLanguage = "Indonesian";
+  String get geminiLanguage => _geminiLanguage;
 
   Future<void> migrateLegacy(SharedPreferencesAsync prefs) async {
     log.config("trying to migrate old prefs");
@@ -407,6 +411,8 @@ class SettingsProvider with ChangeNotifier {
     _geminiApiKey = await prefs.getString(settingGeminiApiKey);
     _geminiModel =
         await prefs.getString(settingGeminiModel) ?? "gemini-2.0-flash-exp";
+    _geminiLanguage =
+        await prefs.getString(settingGeminiLanguage) ?? "Indonesian";
 
     _loaded = _loading = true;
     log.finest(() => "notify SettingsProvider->loadSettings()");
@@ -784,6 +790,18 @@ class SettingsProvider with ChangeNotifier {
     await SharedPreferencesAsync().setString(settingGeminiModel, model);
 
     log.finest(() => "notify SettingsProvider->setGeminiModel()");
+    notifyListeners();
+  }
+
+  Future<void> setGeminiLanguage(String language) async {
+    if (language == _geminiLanguage) {
+      return;
+    }
+
+    _geminiLanguage = language;
+    await SharedPreferencesAsync().setString(settingGeminiLanguage, language);
+
+    log.finest(() => "notify SettingsProvider->setGeminiLanguage()");
     notifyListeners();
   }
 }

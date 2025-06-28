@@ -27,6 +27,12 @@ also read the [FAQ](https://github.com/dreautall/waterfly-iii/blob/master/FAQ.md
   - List transactions by date
   - Ability to filter the list by various fields
   - Add & edit transactions with autocomplete, including attachments and pictures, split transactions & multi currency support
+  - **AI-powered receipt parsing** with Google Gemini integration
+    - Automatically extract transaction data from receipt photos
+    - Multi-language support (English, Indonesian, Spanish, French, German, Japanese, Korean, Chinese)
+    - Configurable AI models (Gemini 2.0 Flash, 2.5 Flash, 1.5 Flash, 1.5 Pro, etc.)
+    - Auto-fill transaction forms with parsed data
+    - Smart categorization and merchant detection
 - Balance Sheet
   - List individual account balances
 - Piggy Banks
@@ -41,6 +47,41 @@ also read the [FAQ](https://github.com/dreautall/waterfly-iii/blob/master/FAQ.md
 - Bills
   - View bills and their overview organized into groups
   - Inspect bill details and see connected transactions
+
+## AI-Powered Receipt Parsing
+
+This enhanced version of Waterfly III includes AI-powered receipt parsing capabilities using Google Gemini. This feature allows you to:
+
+### **Setup**
+1. Go to **Settings** → **Gemini AI Settings**
+2. Enter your Google AI Studio API key (get one at [ai.google.dev](https://ai.google.dev))
+3. Select your preferred AI model
+4. Choose your preferred language for parsed results
+
+### **Usage**
+1. When adding a transaction, tap the attachments icon (📎)
+2. Take a photo of your receipt or upload an existing image
+3. Tap the "Parse with AI" button (✨)
+4. Review the extracted data in the preview dialog
+5. Tap "Auto-Fill Transaction Form" to populate the transaction
+
+### **Features**
+- **Smart Data Extraction**: Automatically detects amount, date, merchant, category, and payment method
+- **Multi-Language Support**: Results in your preferred language (merchant names preserved)
+- **Configurable Models**: Choose from various Gemini models based on your needs
+- **Title Case Categories**: Clean, properly formatted category names
+- **Detailed Notes**: Comprehensive receipt information stored in notes field
+- **Privacy-Focused**: Images processed by Google AI but not stored permanently
+
+### **Supported Languages**
+- English
+- Indonesian (default)
+- Spanish
+- French
+- German
+- Japanese
+- Korean
+- Chinese (Simplified)
 
 ### Feature Status
 

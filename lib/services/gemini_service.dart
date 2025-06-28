@@ -37,6 +37,7 @@ class TransactionData {
 class GeminiService {
   static const List<String> availableModels = [
     'gemini-2.0-flash-exp',
+    'gemini-2.5-flash',
     'gemini-1.5-flash',
     'gemini-1.5-flash-8b',
     'gemini-1.5-pro',
@@ -45,13 +46,16 @@ class GeminiService {
 
   final String _apiKey;
   final String _model;
+  final String _language;
   late final GenerativeModel _generativeModel;
 
   GeminiService({
     required String apiKey,
     required String model,
+    String language = "English",
   })  : _apiKey = apiKey,
-        _model = model {
+        _model = model,
+        _language = language {
     _generativeModel = GenerativeModel(
       model: _model,
       apiKey: _apiKey,
@@ -83,27 +87,35 @@ class GeminiService {
       log.fine("Image loaded, size: ${imageBytes.length} bytes");
 
       final String prompt = '''
-Please analyze this receipt/invoice image and extract the following transaction information in JSON format:
+Please analyze this receipt/invoice image and extract the following transaction information in JSON format.
+${_language != "English" ? "Respond in $_language language for text fields (description, category, notes) unless the original text is clearly in another language." : ""}
 
 {
-  "description": "Brief description of the transaction",
+  "description": "Short transaction title${_language != "English" ? " (in $_language)" : ""} - keep it brief, 3-8 words max",
   "amount": 0.00,
   "date": "YYYY-MM-DD",
-  "merchant": "Name of the store/merchant",
-  "category": "Category of expense (e.g., groceries, fuel, restaurant, etc.)",
-  "paymentMethod": "Payment method if visible (cash, card, etc.)",
-  "currency": "Currency code (e.g., USD, EUR, etc.)",
-  "notes": "Any additional relevant information"
+  "merchant": "Name of the store/merchant (keep original name exactly as shown)",
+  "category": "Category in Title Case${_language != "English" ? " (in $_language)" : ""} (e.g., ${_getCategoryExamples()})",
+  "paymentMethod": "Payment method if visible${_language != "English" ? " (in $_language)" : ""} (${_getPaymentMethodExamples()})",
+  "currency": "Currency code (e.g., ${_getCurrencyExample()})",
+  "notes": "Detailed information${_language != "English" ? " (in $_language)" : ""} - include items purchased, payment details, location, or any other relevant details from receipt"
 }
 
 Rules:
 - Only return valid JSON format
+${_language != "English" ? "- Use $_language language for text fields when possible (except merchant name)" : ""}
 - Use null for fields that cannot be determined from the image
-- For amount, extract the total amount (not including tips unless clearly part of total)
-- For date, use ISO format (YYYY-MM-DD)
-- For currency, use standard 3-letter codes
-- Keep description concise but descriptive
-- If you cannot read the receipt clearly, return null for uncertain fields
+
+FORMATTING REQUIREMENTS:
+- description: Short title (3-8 words), used as transaction record title
+- category: Use Title Case format (e.g., "Grocery Shopping", "Fuel Purchase", "Restaurant Meal")
+- notes: Put all detailed information here (items bought, payment details, store location, receipt number, etc.)
+- merchant: Keep exactly as written on receipt (no translation)
+- amount: Extract total amount only (exclude tips unless part of total)
+- date: Use ISO format (YYYY-MM-DD)
+- currency: Use standard 3-letter codes${_language == "Indonesian" ? " (IDR for Indonesian Rupiah)" : ""}
+
+If you cannot read the receipt clearly, return null for uncertain fields.
 
 Extract the information from this receipt:
 ''';
@@ -229,5 +241,32 @@ Extract the information from this receipt:
   static bool isValidApiKey(String apiKey) {
     // Basic validation - API keys should be non-empty strings
     return apiKey.isNotEmpty && apiKey.length > 10;
+  }
+
+  String _getCategoryExamples() {
+    switch (_language) {
+      case "Indonesian":
+        return "Belanja Kebutuhan, Bahan Bakar, Makanan & Minuman, Transportasi, Kesehatan, Pendidikan, Hiburan";
+      default:
+        return "Grocery Shopping, Fuel Purchase, Restaurant Meal, Transportation, Healthcare, Education, Entertainment";
+    }
+  }
+
+  String _getPaymentMethodExamples() {
+    switch (_language) {
+      case "Indonesian":
+        return "Tunai, Kartu Debit, Kartu Kredit, Transfer";
+      default:
+        return "Cash, Debit Card, Credit Card, Transfer";
+    }
+  }
+
+  String _getCurrencyExample() {
+    switch (_language) {
+      case "Indonesian":
+        return "IDR, USD, EUR, etc.";
+      default:
+        return "USD, EUR, IDR, etc.";
+    }
   }
 }

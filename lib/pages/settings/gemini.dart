@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
 import 'package:waterflyiii/services/gemini_service.dart';
 import 'package:waterflyiii/settings.dart';
 
@@ -16,6 +15,18 @@ class _GeminiSettingsPageState extends State<GeminiSettingsPage> {
   final FocusNode _apiKeyFocusNode = FocusNode();
   bool _obscureApiKey = true;
   String? _selectedModel;
+  String? _selectedLanguage;
+
+  static const List<String> availableLanguages = [
+    'English',
+    'Indonesian',
+    'Spanish',
+    'French',
+    'German',
+    'Japanese',
+    'Korean',
+    'Chinese (Simplified)',
+  ];
 
   @override
   void initState() {
@@ -23,6 +34,7 @@ class _GeminiSettingsPageState extends State<GeminiSettingsPage> {
     final SettingsProvider settings = context.read<SettingsProvider>();
     _apiKeyController.text = settings.geminiApiKey ?? '';
     _selectedModel = settings.geminiModel;
+    _selectedLanguage = settings.geminiLanguage;
   }
 
   @override
@@ -61,6 +73,17 @@ class _GeminiSettingsPageState extends State<GeminiSettingsPage> {
     _showSuccessSnackBar('Model saved successfully');
   }
 
+  void _saveLanguage(String? language) async {
+    if (language == null) return;
+
+    final SettingsProvider settings = context.read<SettingsProvider>();
+    await settings.setGeminiLanguage(language);
+    setState(() {
+      _selectedLanguage = language;
+    });
+    _showSuccessSnackBar('Language saved successfully');
+  }
+
   void _showErrorSnackBar(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
@@ -84,7 +107,6 @@ class _GeminiSettingsPageState extends State<GeminiSettingsPage> {
   @override
   Widget build(BuildContext context) {
     final ThemeData theme = Theme.of(context);
-    final S l10n = S.of(context);
 
     return Scaffold(
       appBar: AppBar(
@@ -217,6 +239,43 @@ class _GeminiSettingsPageState extends State<GeminiSettingsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  Text(
+                    'Response Language',
+                    style: theme.textTheme.titleMedium,
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Language for AI-parsed transaction details (merchant names remain unchanged)',
+                    style: theme.textTheme.bodySmall?.copyWith(
+                      color: theme.colorScheme.onSurfaceVariant,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                    value: _selectedLanguage,
+                    decoration: const InputDecoration(
+                      labelText: 'Select Language',
+                      border: OutlineInputBorder(),
+                    ),
+                    items: availableLanguages.map((String language) {
+                      return DropdownMenuItem<String>(
+                        value: language,
+                        child: Text(language),
+                      );
+                    }).toList(),
+                    onChanged: _saveLanguage,
+                  ),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Card(
+            child: Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Row(
                     children: [
                       Icon(
@@ -251,6 +310,8 @@ class _GeminiSettingsPageState extends State<GeminiSettingsPage> {
     switch (model) {
       case 'gemini-2.0-flash-exp':
         return 'Latest model, experimental (Recommended)';
+      case 'gemini-2.5-flash':
+        return 'Enhanced flash model, improved performance';
       case 'gemini-1.5-flash':
         return 'Fast, efficient processing';
       case 'gemini-1.5-flash-8b':

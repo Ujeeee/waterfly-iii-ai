@@ -23,7 +23,7 @@ import 'package:waterflyiii/generated/l10n/app_localizations.dart';
 import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 import 'package:waterflyiii/notificationlistener.dart';
 import 'package:waterflyiii/pages/navigation.dart';
-import 'package:waterflyiii/pages/transaction/attachments.dart';
+import 'package:waterflyiii/pages/transaction/simple_attachments.dart';
 import 'package:waterflyiii/pages/transaction/bill.dart';
 import 'package:waterflyiii/pages/transaction/currencies.dart';
 import 'package:waterflyiii/pages/transaction/delete.dart';
@@ -926,6 +926,84 @@ class _TransactionPageState extends State<TransactionPage>
     }
   }
 
+  void _handleParsedTransactionData(TransactionData parsedData) {
+    log.info("Handling parsed transaction data: $parsedData");
+    print(
+        'Transaction form: _handleParsedTransactionData called with: $parsedData');
+
+    setState(() {
+      // Fill title/description
+      if (parsedData.description != null &&
+          parsedData.description!.isNotEmpty) {
+        _titleTextController.text = parsedData.description!;
+        // Also update split titles if we have splits
+        if (_titleTextControllers.isNotEmpty) {
+          _titleTextControllers.first.text = parsedData.description!;
+        }
+      }
+
+      // Fill amount
+      if (parsedData.amount != null) {
+        if (_localAmounts.isNotEmpty) {
+          _localAmounts[0] = parsedData.amount!;
+          _localAmountTextControllers.first.text =
+              parsedData.amount!.toStringAsFixed(2);
+        }
+        // Update the main amount controller
+        _localAmountTextController.text = parsedData.amount!.toStringAsFixed(2);
+      }
+
+      // Fill date
+      if (parsedData.date != null) {
+        _date = _tzHandler.sTime(parsedData.date!).toLocal();
+      }
+
+      // Fill destination account (merchant)
+      if (parsedData.merchant != null && parsedData.merchant!.isNotEmpty) {
+        _destinationAccountTextController.text = parsedData.merchant!;
+        if (_destinationAccountTextControllers.isNotEmpty) {
+          _destinationAccountTextControllers.first.text = parsedData.merchant!;
+        }
+      }
+
+      // Fill category
+      if (parsedData.category != null && parsedData.category!.isNotEmpty) {
+        if (_categoryTextControllers.isNotEmpty) {
+          _categoryTextControllers.first.text = parsedData.category!;
+        }
+      }
+
+      // Fill notes
+      String notes = '';
+      if (parsedData.paymentMethod?.isNotEmpty ?? false) {
+        notes += 'Payment Method: ${parsedData.paymentMethod!}';
+      }
+      if (parsedData.notes?.isNotEmpty ?? false) {
+        if (notes.isNotEmpty) notes += '\n';
+        notes += parsedData.notes!;
+      }
+      if (notes.isNotEmpty && _noteTextControllers.isNotEmpty) {
+        _noteTextControllers.first.text = notes;
+      }
+
+      // Set transaction type to withdrawal for receipts
+      if (_newTX && parsedData.amount != null) {
+        _transactionType = TransactionTypeProperty.withdrawal;
+      }
+
+      // Check transaction type and validate accounts
+      checkTXType();
+    });
+
+    // Show confirmation snackbar
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('Transaction form auto-filled with AI parsed data'),
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     log.finest(() => "build()");
@@ -1324,15 +1402,18 @@ class _TransactionPageState extends State<TransactionPage>
           AttachmentButton(
             attachments: _attachments,
             onPressed: () async {
+              print(
+                  'Transaction form: Opening SimpleAttachmentsDialog with callback: $_handleParsedTransactionData');
               final List<AttachmentRead> dialogAttachments =
                   _attachments ?? <AttachmentRead>[];
               await showDialog<List<AttachmentRead>>(
                 context: context,
-                builder: (BuildContext context) => AttachmentDialog(
+                builder: (BuildContext context) => SimpleAttachmentsDialog(
                   attachments: dialogAttachments,
                   transactionId: _transactionJournalIDs.firstWhereOrNull(
                     (String? element) => element != null,
                   ),
+                  onTransactionDataParsed: _handleParsedTransactionData,
                 ),
               );
               setState(() {

@@ -17,7 +17,6 @@ import 'package:waterflyiii/generated/l10n/app_localizations.dart';
 import 'package:waterflyiii/generated/swagger_fireflyiii_api/firefly_iii.swagger.dart';
 import 'package:waterflyiii/services/gemini_service.dart';
 import 'package:waterflyiii/settings.dart';
-import 'package:waterflyiii/widgets/materialiconbutton.dart';
 
 class AttachmentDialog extends StatefulWidget {
   const AttachmentDialog({
@@ -328,6 +327,153 @@ class _AttachmentDialogState extends State<AttachmentDialog>
         filename.endsWith('.webp');
   }
 
+  /// Get authenticated image widget for an attachment
+  Widget _buildImagePreview(AttachmentRead attachment) {
+    if (widget.transactionId == null) {
+      // For new transactions, use local file path
+      final String? localPath = attachment.attributes.uploadUrl;
+      if (localPath != null && File(localPath).existsSync()) {
+        return Image.file(
+          File(localPath),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            return _buildImageErrorWidget();
+          },
+        );
+      }
+      return _buildImageErrorWidget();
+    }
+
+    // For existing transactions, try direct network access first, then fallback to download
+    final String? downloadUrl = attachment.attributes.downloadUrl;
+    if (downloadUrl == null) {
+      return _buildImageErrorWidget();
+    }
+
+    return FutureBuilder<Map<String, String>>(
+      future: _getAuthHeaders(),
+      builder: (context, headerSnapshot) {
+        if (headerSnapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (!headerSnapshot.hasData) {
+          return _buildImageErrorWidget();
+        }
+
+        // Try network image first
+        return Image.network(
+          downloadUrl,
+          fit: BoxFit.cover,
+          headers: headerSnapshot.data,
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Center(
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+          errorBuilder: (context, error, stackTrace) {
+            // If network fails, try downloading to temp storage
+            return FutureBuilder<File?>(
+              future: _downloadImageToTemp(attachment),
+              builder: (context, fileSnapshot) {
+                if (fileSnapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                } else if (fileSnapshot.hasData && fileSnapshot.data != null) {
+                  return Image.file(
+                    fileSnapshot.data!,
+                    fit: BoxFit.cover,
+                    errorBuilder: (context, error, stackTrace) {
+                      return _buildImageErrorWidget();
+                    },
+                  );
+                } else {
+                  return _buildImageErrorWidget();
+                }
+              },
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildImageErrorWidget() {
+    return Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.broken_image,
+              color: Theme.of(context).colorScheme.outline),
+          const SizedBox(height: 8),
+          Text('Failed to load image',
+              style: Theme.of(context).textTheme.bodySmall),
+        ],
+      ),
+    );
+  }
+
+  Future<Map<String, String>> _getAuthHeaders() async {
+    final AuthUser? user = context.read<FireflyService>().user;
+    return user?.headers() ?? {};
+  }
+
+  /// Download attachment image to temporary storage for preview
+  Future<File?> _downloadImageToTemp(AttachmentRead attachment) async {
+    try {
+      final AuthUser? user = context.read<FireflyService>().user;
+      if (user == null || attachment.attributes.downloadUrl == null) {
+        return null;
+      }
+
+      // Create a cache key based on attachment ID and last modified date
+      final String cacheKey =
+          '${attachment.id}_${attachment.attributes.updatedAt?.millisecondsSinceEpoch ?? attachment.attributes.createdAt?.millisecondsSinceEpoch ?? 0}';
+      final Directory tmpDir = await getTemporaryDirectory();
+      final File cachedFile =
+          File('${tmpDir.path}/attachment_preview_$cacheKey.jpg');
+
+      // Return cached file if it exists and is recent (less than 1 hour old)
+      if (await cachedFile.exists()) {
+        final DateTime lastModified = await cachedFile.lastModified();
+        final Duration age = DateTime.now().difference(lastModified);
+        if (age.inHours < 1) {
+          return cachedFile;
+        }
+      }
+
+      // Download the image
+      final http.Request request = http.Request(
+        HttpMethod.Get,
+        Uri.parse(attachment.attributes.downloadUrl!),
+      );
+      request.headers.addAll(user.headers());
+
+      final http.StreamedResponse resp = await httpClient.send(request);
+      if (resp.statusCode != 200) {
+        log.warning("Failed to download image for preview: ${resp.statusCode}");
+        return null;
+      }
+
+      // Save to cache
+      final List<int> fileData = [];
+      await for (List<int> chunk in resp.stream) {
+        fileData.addAll(chunk);
+      }
+
+      await cachedFile.writeAsBytes(fileData);
+      return cachedFile;
+    } catch (e) {
+      log.warning("Error downloading image to temp: $e");
+      return null;
+    }
+  }
+
   void parseReceiptAttachment(
     BuildContext context,
     AttachmentRead attachment,
@@ -406,6 +552,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
       final GeminiService geminiService = GeminiService(
         apiKey: settings.geminiApiKey!,
         model: settings.geminiModel,
+        language: settings.geminiLanguage,
       );
 
       final TransactionData? transactionData =
@@ -526,6 +673,7 @@ class _AttachmentDialogState extends State<AttachmentDialog>
       final GeminiService geminiService = GeminiService(
         apiKey: settings.geminiApiKey!,
         model: settings.geminiModel,
+        language: settings.geminiLanguage,
       );
 
       final File imageFileObj = File(imageFile.path);
@@ -620,10 +768,47 @@ class _AttachmentDialogState extends State<AttachmentDialog>
     }
   }
 
+  /// Clean up old cached preview files to prevent disk space issues
+  Future<void> _cleanupOldCachedFiles() async {
+    try {
+      final Directory tmpDir = await getTemporaryDirectory();
+      final List<FileSystemEntity> files = tmpDir.listSync();
+
+      for (FileSystemEntity entity in files) {
+        if (entity is File && entity.path.contains('attachment_preview_')) {
+          final DateTime lastModified = await entity.lastModified();
+          final Duration age = DateTime.now().difference(lastModified);
+
+          // Delete files older than 24 hours
+          if (age.inHours > 24) {
+            try {
+              await entity.delete();
+              log.fine("Cleaned up old cached preview: ${entity.path}");
+            } catch (e) {
+              log.warning("Failed to delete old cached file: $e");
+            }
+          }
+        }
+      }
+    } catch (e) {
+      log.warning("Error cleaning up cached files: $e");
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    // Clean up old cached files when dialog opens
+    _cleanupOldCachedFiles();
+  }
+
   @override
   Widget build(BuildContext context) {
     log.finest(() => "build(transactionId: ${widget.transactionId})");
-    final List<Widget> childs = <Widget>[];
+    final List<Widget> attachmentCards = <Widget>[];
+    final List<Widget> progressIndicators = <Widget>[];
+
+    // Build attachment cards
     for (int i = 0; i < widget.attachments.length; i++) {
       final AttachmentRead attachment = widget.attachments[i];
       String subtitle = "";
@@ -636,210 +821,362 @@ class _AttachmentDialogState extends State<AttachmentDialog>
       if (attachment.attributes.size != null) {
         subtitle = "$subtitle (${filesize(attachment.attributes.size)})";
       }
-      childs.add(
-        ListTile(
-          enabled:
-              (_dlProgress[i] != null && _dlProgress[i]! < 0) ? false : true,
-          leading: MaterialIconButton(
-            icon: (_dlProgress[i] != null && _dlProgress[i]! < 0)
-                ? Icons.upload
-                : Icons.download,
-            onPressed: _dlProgress[i] != null
-                ? null
-                : widget.transactionId == null
-                    ? () async => fakeDownloadAttachment(context, attachment)
-                    : () async => downloadAttachment(context, attachment, i),
-          ),
-          title: Text(
-            attachment.attributes.title ?? attachment.attributes.filename,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          subtitle: Text(
-            subtitle,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-          ),
-          isThreeLine: false,
-          trailing: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // Show parse button for image attachments
-              if (_isImageAttachment(attachment))
-                MaterialIconButton(
-                  icon: Icons.smart_toy,
-                  onPressed: (_dlProgress[i] != null && _dlProgress[i]! < 0)
-                      ? null
-                      : () async => parseReceiptAttachment(context, attachment),
-                ),
-              MaterialIconButton(
-                icon: Icons.delete,
-                onPressed: (_dlProgress[i] != null && _dlProgress[i]! < 0)
-                    ? null
-                    : widget.transactionId == null
-                        ? () async => fakeDeleteAttachment(context, i)
-                        : () async => deleteAttachment(context, attachment, i),
-              ),
-            ],
-          ),
-        ),
-      );
-      final DividerThemeData divTheme = DividerTheme.of(context);
-      childs.add(
-        SizedBox(
-          height: divTheme.space ?? 16,
-          child: Center(
-            child: _dlProgress[i] == null
-                ? const Divider(height: 0)
-                : LinearProgressIndicator(
-                    value: _dlProgress[i]!.abs(),
-                    //minHeight: divTheme.thickness ?? 4,
-                    //backgroundColor: divTheme.color ?? theme.colorScheme.outlineVariant,
-                  ),
-          ),
-        ),
-      );
-    }
 
-    // Add helpful message when no attachments exist
-    if (widget.attachments.isEmpty) {
-      childs.add(
-        Padding(
-          padding: const EdgeInsets.all(24.0),
+      final bool isImage = _isImageAttachment(attachment);
+      final bool isUploading = _dlProgress[i] != null && _dlProgress[i]! < 0;
+
+      attachmentCards.add(
+        Card(
+          margin: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
           child: Column(
             children: [
-              Icon(
-                widget.isNewTransaction ? Icons.smart_toy : Icons.attach_file,
-                size: 48,
-                color: Theme.of(context).colorScheme.outline,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                widget.isNewTransaction
-                    ? 'Take a photo of your receipt and let AI extract transaction details automatically!'
-                    : 'No attachments yet',
-                style: Theme.of(context).textTheme.bodyLarge,
-                textAlign: TextAlign.center,
-              ),
-              if (widget.isNewTransaction) ...[
-                const SizedBox(height: 8),
-                Text(
-                  'This will help auto-fill the transaction form with parsed data.',
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: Theme.of(context).colorScheme.outline,
-                      ),
-                  textAlign: TextAlign.center,
+              // Image preview for image attachments
+              if (isImage)
+                Container(
+                  height: 200,
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color:
+                        Theme.of(context).colorScheme.surfaceContainerHighest,
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(12)),
+                  ),
+                  child: ClipRRect(
+                    borderRadius:
+                        const BorderRadius.vertical(top: Radius.circular(12)),
+                    child: _buildImagePreview(attachment),
+                  ),
                 ),
-              ],
+
+              // File info and actions
+              ListTile(
+                enabled: !isUploading,
+                leading: Icon(
+                  isUploading
+                      ? Icons.upload
+                      : isImage
+                          ? Icons.image
+                          : Icons.attach_file,
+                ),
+                title: Text(
+                  attachment.attributes.title ?? attachment.attributes.filename,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                subtitle: Text(
+                  subtitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: isUploading
+                    ? const SizedBox(
+                        width: 24,
+                        height: 24,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          // Parse button for image attachments only
+                          if (isImage)
+                            IconButton(
+                              icon: const Icon(Icons.auto_awesome),
+                              tooltip: 'Parse with AI',
+                              onPressed: () async =>
+                                  parseReceiptAttachment(context, attachment),
+                            ),
+                          // View/Download button
+                          IconButton(
+                            icon: Icon(
+                                isImage ? Icons.visibility : Icons.download),
+                            tooltip: isImage ? 'View' : 'Download',
+                            onPressed: isImage
+                                ? () => viewImageAttachment(context, attachment)
+                                : widget.transactionId == null
+                                    ? () async => fakeDownloadAttachment(
+                                        context, attachment)
+                                    : () async => downloadAttachment(
+                                        context, attachment, i),
+                          ),
+                          // Delete button
+                          IconButton(
+                            icon: const Icon(Icons.delete),
+                            tooltip: 'Delete',
+                            onPressed: widget.transactionId == null
+                                ? () async => fakeDeleteAttachment(context, i)
+                                : () async =>
+                                    deleteAttachment(context, attachment, i),
+                          ),
+                        ],
+                      ),
+              ),
             ],
           ),
         ),
       );
+
+      // Progress indicator
+      if (_dlProgress[i] != null) {
+        progressIndicators.add(
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            child: LinearProgressIndicator(
+              value: _dlProgress[i]!.abs(),
+            ),
+          ),
+        );
+      }
     }
 
-    childs.add(
-      OverflowBar(
-        alignment: MainAxisAlignment.end,
-        spacing: 12,
-        overflowSpacing: 12,
-        children: <Widget>[
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+    // Build empty state widget
+    final Widget emptyStateWidget = Padding(
+      padding: const EdgeInsets.all(24.0),
+      child: Column(
+        children: [
+          Icon(
+            Icons.smart_toy,
+            size: 64,
+            color: Theme.of(context).colorScheme.primary.withOpacity(0.6),
           ),
-          if (widget.isNewTransaction) ...[
-            // For new transactions, emphasize AI parsing capabilities
-            FilledButton.icon(
-              onPressed: () async => _takePhotoAndParse(context),
-              icon: const Icon(Icons.smart_toy, size: 18),
-              label: const Text('Take Photo & Parse'),
+          const SizedBox(height: 16),
+          Text(
+            'Smart Receipt Processing',
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Take a photo of your receipt and let AI automatically extract transaction details like amount, merchant, date, and category.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+            textAlign: TextAlign.center,
+          ),
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            decoration: BoxDecoration(
+              color: Theme.of(context)
+                  .colorScheme
+                  .primaryContainer
+                  .withOpacity(0.3),
+              borderRadius: BorderRadius.circular(20),
             ),
-          ] else ...[
-            // For existing transactions, show more compact buttons
-            FilledButton.tonal(
-              onPressed: () async => _takePhotoAndParse(context),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Icons.smart_toy, size: 18),
-                  const SizedBox(width: 4),
-                  const Icon(Icons.camera_alt, size: 18),
-                ],
-              ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(
+                  Icons.tips_and_updates,
+                  size: 16,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  'Tip: Use "Take Photo & Parse" for best results',
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Theme.of(context).colorScheme.primary,
+                      ),
+                ),
+              ],
             ),
-          ],
-          FilledButton(
-            onPressed: () async {
-              final ImagePicker picker = ImagePicker();
-              final XFile? imageFile = await picker.pickImage(
-                source: ImageSource.camera,
-              );
-
-              if (imageFile == null) {
-                log.finest(() => "no image returned");
-                return;
-              }
-
-              log.finer(() => "Image ${imageFile.path} will be uploaded");
-              final PlatformFile file = PlatformFile(
-                path: imageFile.path,
-                name: imageFile.name,
-                size: await imageFile.length(),
-              );
-              if (context.mounted) {
-                if (widget.transactionId == null) {
-                  fakeUploadAttachment(context, file);
-                } else {
-                  uploadAttachment(context, file);
-                }
-              }
-            },
-            child: widget.isNewTransaction
-                ? const Text('Take Photo')
-                : const Icon(Icons.camera_alt),
           ),
-          FilledButton(
-            onPressed: () async {
-              final FilePickerResult? file =
-                  await FilePicker.platform.pickFiles();
-              if (file == null || file.files.first.path == null) {
-                return;
-              }
-              if (context.mounted) {
-                if (widget.transactionId == null) {
-                  fakeUploadAttachment(context, file.files.first);
-                } else {
-                  uploadAttachment(context, file.files.first);
-                }
-              }
-            },
-            child: widget.isNewTransaction
-                ? const Text('Upload File')
-                : const Icon(Icons.upload_file),
-          ),
-          const SizedBox(width: 12),
         ],
       ),
     );
-    return SimpleDialog(
-      title: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
+
+    // Build action buttons widget
+    final Widget actionButtonsWidget = Padding(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
         children: [
-          Text(S.of(context).transactionDialogAttachmentsTitle),
-          if (widget.isNewTransaction) ...[
-            const SizedBox(height: 4),
-            Text(
-              'You can parse receipts to auto-fill transaction data before saving',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.primary,
-                  ),
-            ),
-          ],
+          // Primary action buttons
+          Row(
+            children: [
+              Expanded(
+                child: FilledButton.icon(
+                  onPressed: () async {
+                    // Combined functionality: take photo and parse
+                    final SettingsProvider settings =
+                        context.read<SettingsProvider>();
+                    final ScaffoldMessengerState msg =
+                        ScaffoldMessenger.of(context);
+
+                    // Check if Gemini API is configured
+                    if (settings.geminiApiKey == null ||
+                        settings.geminiApiKey!.isEmpty) {
+                      msg.showSnackBar(
+                        SnackBar(
+                          content: const Text(
+                              'Please configure Gemini AI in settings first'),
+                          action: SnackBarAction(
+                            label: 'Settings',
+                            onPressed: () {
+                              Navigator.of(context)
+                                  .pushNamed('/settings/gemini');
+                            },
+                          ),
+                          behavior: SnackBarBehavior.floating,
+                        ),
+                      );
+                      return;
+                    }
+
+                    // Take photo and parse
+                    await _takePhotoAndParse(context);
+                  },
+                  icon: const Icon(Icons.camera_alt),
+                  label: const Text('Take Photo & Parse'),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          // Secondary action buttons
+          Row(
+            children: [
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final ImagePicker picker = ImagePicker();
+                    final XFile? imageFile = await picker.pickImage(
+                      source: ImageSource.camera,
+                    );
+
+                    if (imageFile == null) {
+                      log.finest(() => "no image returned");
+                      return;
+                    }
+
+                    log.finer(() => "Image ${imageFile.path} will be uploaded");
+                    final PlatformFile file = PlatformFile(
+                      path: imageFile.path,
+                      name: imageFile.name,
+                      size: await imageFile.length(),
+                    );
+                    if (context.mounted) {
+                      if (widget.transactionId == null) {
+                        fakeUploadAttachment(context, file);
+                      } else {
+                        uploadAttachment(context, file);
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.photo_camera),
+                  label: const Text('Camera Only'),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: OutlinedButton.icon(
+                  onPressed: () async {
+                    final FilePickerResult? file =
+                        await FilePicker.platform.pickFiles();
+                    if (file == null || file.files.first.path == null) {
+                      return;
+                    }
+                    if (context.mounted) {
+                      if (widget.transactionId == null) {
+                        fakeUploadAttachment(context, file.files.first);
+                      } else {
+                        uploadAttachment(context, file.files.first);
+                      }
+                    }
+                  },
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Upload File'),
+                ),
+              ),
+            ],
+          ),
         ],
       ),
-      clipBehavior: Clip.hardEdge,
-      children: childs,
+    );
+
+    return Dialog.fullscreen(
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(S.of(context).transactionDialogAttachmentsTitle),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: Text(MaterialLocalizations.of(context).closeButtonLabel),
+            ),
+          ],
+        ),
+        body: widget.attachments.isEmpty
+            ? Column(
+                children: [
+                  Expanded(child: emptyStateWidget),
+                  actionButtonsWidget,
+                ],
+              )
+            : ListView(
+                padding: const EdgeInsets.all(8),
+                children: [
+                  ...attachmentCards,
+                  ...progressIndicators,
+                ],
+              ),
+        bottomNavigationBar: widget.attachments.isNotEmpty
+            ? Container(
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.surface,
+                  boxShadow: [
+                    BoxShadow(
+                      color: Theme.of(context).shadowColor.withOpacity(0.1),
+                      blurRadius: 4,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: SafeArea(child: actionButtonsWidget),
+              )
+            : null,
+      ),
+    );
+  }
+
+  void viewImageAttachment(
+      BuildContext context, AttachmentRead attachment) async {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog.fullscreen(
+        child: Scaffold(
+          appBar: AppBar(
+            title: Text(attachment.attributes.filename),
+            backgroundColor: Colors.black,
+            foregroundColor: Colors.white,
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.download),
+                onPressed: () {
+                  Navigator.of(context).pop();
+                  if (widget.transactionId == null) {
+                    fakeDownloadAttachment(context, attachment);
+                  } else {
+                    downloadAttachment(context, attachment,
+                        widget.attachments.indexOf(attachment));
+                  }
+                },
+              ),
+              IconButton(
+                icon: const Icon(Icons.close),
+                onPressed: () => Navigator.of(context).pop(),
+              ),
+            ],
+          ),
+          backgroundColor: Colors.black,
+          body: Center(
+            child: InteractiveViewer(
+              minScale: 0.5,
+              maxScale: 3.0,
+              child: _buildImagePreview(attachment),
+            ),
+          ),
+        ),
+      ),
     );
   }
 }

@@ -430,6 +430,7 @@ class _AiReceiptParserPageState extends State<AiReceiptParserPage> {
       final GeminiService geminiService = GeminiService(
         apiKey: settings.geminiApiKey!,
         model: settings.geminiModel,
+        language: settings.geminiLanguage,
       );
 
       final TransactionData? result =
