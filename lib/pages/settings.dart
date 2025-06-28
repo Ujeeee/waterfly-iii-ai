@@ -13,6 +13,7 @@ import 'package:waterflyiii/auth.dart';
 import 'package:waterflyiii/generated/l10n/app_localizations.dart';
 import 'package:waterflyiii/notificationlistener.dart';
 import 'package:waterflyiii/pages/settings/debug.dart';
+import 'package:waterflyiii/pages/settings/gemini.dart';
 import 'package:waterflyiii/pages/settings/notifications.dart';
 import 'package:waterflyiii/settings.dart';
 
@@ -90,10 +91,9 @@ class SettingsPageState extends State<SettingsPage>
               onTap: () {
                 showDialog<ThemeMode?>(
                   context: context,
-                  builder:
-                      (BuildContext context) => ThemeDialog(
-                        dynamicColorAvailable: dynamicColorAvailable,
-                      ),
+                  builder: (BuildContext context) => ThemeDialog(
+                    dynamicColorAvailable: dynamicColorAvailable,
+                  ),
                 ).then((ThemeMode? theme) {
                   if (theme == null) {
                     return;
@@ -117,8 +117,8 @@ class SettingsPageState extends State<SettingsPage>
           ),
           onChanged: (bool value) async {
             await context.read<FireflyService>().tzHandler.setUseServerTime(
-              value,
-            );
+                  value,
+                );
             settings.useServerTime = value;
           },
         ),
@@ -139,8 +139,7 @@ class SettingsPageState extends State<SettingsPage>
             final ScaffoldMessengerState msg = ScaffoldMessenger.of(context);
             if (value == true) {
               final LocalAuthentication auth = LocalAuthentication();
-              final bool canAuth =
-                  await auth.isDeviceSupported() ||
+              final bool canAuth = await auth.isDeviceSupported() ||
                   await auth.canCheckBiometrics;
               if (!canAuth) {
                 log.warning("no auth method supported");
@@ -170,6 +169,23 @@ class SettingsPageState extends State<SettingsPage>
             }
             settings.lock = value;
           },
+        ),
+        const Divider(),
+        OpenContainer(
+          openBuilder: (BuildContext context, Function closedContainer) =>
+              const GeminiSettingsPage(),
+          openColor: Theme.of(context).cardColor,
+          closedColor: Theme.of(context).cardColor,
+          closedElevation: 0,
+          closedBuilder: (BuildContext context, Function openContainer) =>
+              ListTile(
+            title: const Text('Gemini AI Receipt Parser'),
+            subtitle: const Text('Configure AI-powered receipt scanning'),
+            leading: const CircleAvatar(
+              child: Icon(Icons.smart_toy),
+            ),
+            onTap: () => openContainer(),
+          ),
         ),
         const Divider(),
         FutureBuilder<NotificationListenerStatus>(
@@ -204,21 +220,20 @@ class SettingsPageState extends State<SettingsPage>
               subtitle = S.of(context).settingsNLServiceChecking;
             }
             return OpenContainer(
-              openBuilder:
-                  (BuildContext context, Function closedContainer) =>
-                      const SettingsNotifications(),
+              openBuilder: (BuildContext context, Function closedContainer) =>
+                  const SettingsNotifications(),
               openColor: Theme.of(context).cardColor,
               closedColor: Theme.of(context).cardColor,
               closedElevation: 0,
-              closedBuilder:
-                  (BuildContext context, Function openContainer) => ListTile(
-                    title: Text(S.of(context).settingsNotificationListener),
-                    subtitle: Text(subtitle, maxLines: 2),
-                    leading: const CircleAvatar(
-                      child: Icon(Icons.notifications),
-                    ),
-                    onTap: () => openContainer(),
-                  ),
+              closedBuilder: (BuildContext context, Function openContainer) =>
+                  ListTile(
+                title: Text(S.of(context).settingsNotificationListener),
+                subtitle: Text(subtitle, maxLines: 2),
+                leading: const CircleAvatar(
+                  child: Icon(Icons.notifications),
+                ),
+                onTap: () => openContainer(),
+              ),
               onClosed: (_) => setState(() {}),
             );
           },
@@ -252,11 +267,10 @@ class SettingsPageState extends State<SettingsPage>
               leading: const CircleAvatar(
                 child: Icon(Icons.info_outline_rounded),
               ),
-              onTap:
-                  () => showDialog(
-                    context: context,
-                    builder: (BuildContext context) => const DebugDialog(),
-                  ),
+              onTap: () => showDialog(
+                context: context,
+                builder: (BuildContext context) => const DebugDialog(),
+              ),
             );
           },
         ),
@@ -301,11 +315,11 @@ class ThemeDialog extends StatelessWidget {
       children: <Widget>[
         dynamicColorAvailable
             ? SwitchListTile(
-              title: Text(S.of(context).settingsThemeDynamicColors),
-              value: context.select((SettingsProvider s) => s.dynamicColors),
-              isThreeLine: false,
-              onChanged: (bool value) => settings.dynamicColors = value,
-            )
+                title: Text(S.of(context).settingsThemeDynamicColors),
+                value: context.select((SettingsProvider s) => s.dynamicColors),
+                isThreeLine: false,
+                onChanged: (bool value) => settings.dynamicColors = value,
+              )
             : const SizedBox.shrink(),
         ...ThemeMode.values.map(
           (ThemeMode theme) => RadioListTile<ThemeMode>(

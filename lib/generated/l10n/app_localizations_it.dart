@@ -1,8 +1,6 @@
-// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-import 'app_localizations.dart';
 
-// ignore_for_file: type=lint
+import 'app_localizations.dart';
 
 /// The translations for Italian (`it`).
 class SIt extends S {
@@ -37,32 +35,34 @@ class SIt extends S {
 
   @override
   String accountsLiabilitiesInterest(double interest, String period) {
-    String _temp0 = intl.Intl.selectLogic(period, {
-      'weekly': 'settimana',
-      'monthly': 'mese',
-      'quarterly': 'trimestre',
-      'halfyear': 'semestre',
-      'yearly': 'anno',
-      'other': 'sconosciuto',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      period,
+      {
+        'weekly': 'settimana',
+        'monthly': 'mese',
+        'quarterly': 'trimestre',
+        'halfyear': 'semestre',
+        'yearly': 'anno',
+        'other': 'sconosciuto',
+      },
+    );
     return '$interest% di interesse per $_temp0';
   }
 
   @override
   String billsAmountAndFrequency(
-    String minValue,
-    String maxvalue,
-    String frequency,
-    num skip,
-  ) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': 'settimanale',
-      'monthly': 'mensile',
-      'quarterly': 'trimestrale',
-      'halfyear': 'semestrale',
-      'yearly': 'annuale',
-      'other': 'sconosciuta',
-    });
+      String minValue, String maxvalue, String frequency, num skip) {
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': 'settimanale',
+        'monthly': 'mensile',
+        'quarterly': 'trimestrale',
+        'halfyear': 'semestrale',
+        'yearly': 'annuale',
+        'other': 'sconosciuta',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -83,18 +83,18 @@ class SIt extends S {
 
   @override
   String billsExactAmountAndFrequency(
-    String value,
-    String frequency,
-    num skip,
-  ) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': 'settimanale',
-      'monthly': 'mensile',
-      'quarterly': 'trimestrale',
-      'halfyear': 'semestrale',
-      'yearly': 'annuale',
-      'other': 'sconosciuta',
-    });
+      String value, String frequency, num skip) {
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': 'settimanale',
+        'monthly': 'mensile',
+        'quarterly': 'trimestrale',
+        'halfyear': 'semestrale',
+        'yearly': 'annuale',
+        'other': 'sconosciuta',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -114,27 +114,33 @@ class SIt extends S {
 
   @override
   String billsFrequency(String frequency) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': 'Settimanale',
-      'monthly': 'Mensile',
-      'quarterly': 'Trimestrale',
-      'halfyear': 'Semestrale',
-      'yearly': 'Annuale',
-      'other': 'Sconosciuta',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': 'Settimanale',
+        'monthly': 'Mensile',
+        'quarterly': 'Trimestrale',
+        'halfyear': 'Semestrale',
+        'yearly': 'Annuale',
+        'other': 'Sconosciuta',
+      },
+    );
     return '$_temp0';
   }
 
   @override
   String billsFrequencySkip(String frequency, num skip) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': 'Settimanale',
-      'monthly': 'Mensile',
-      'quarterly': 'Trimestrale',
-      'halfyear': 'Semestrale',
-      'yearly': 'Annuale',
-      'other': 'Sconosciuta',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': 'Settimanale',
+        'monthly': 'Mensile',
+        'quarterly': 'Trimestrale',
+        'halfyear': 'Semestrale',
+        'yearly': 'Annuale',
+        'other': 'Sconosciuta',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -285,7 +291,17 @@ class SIt extends S {
   String get formButtonTransactionAdd => 'Aggiungi transazione';
 
   @override
+  String get formButtonTransactionAddWithAI => 'Add with AI Receipt';
+
+  @override
   String get formButtonTryAgain => 'Riprova';
+
+  @override
+  String get aiReceiptParsingTitle => 'AI Receipt Parser';
+
+  @override
+  String get aiReceiptParsingSubtitle =>
+      'Take a photo or upload a receipt to automatically extract transaction details';
 
   @override
   String get generalAccount => 'Conto';
@@ -384,14 +400,17 @@ class SIt extends S {
 
   @override
   String homeMainBillsInterval(String period) {
-    String _temp0 = intl.Intl.selectLogic(period, {
-      'weekly': 'settimanale',
-      'monthly': 'mensile',
-      'quarterly': 'trimestrale',
-      'halfyear': 'semestrale',
-      'yearly': 'annuale',
-      'other': 'sconosciuto',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      period,
+      {
+        'weekly': 'settimanale',
+        'monthly': 'mensile',
+        'quarterly': 'trimestrale',
+        'halfyear': 'semestrale',
+        'yearly': 'annuale',
+        'other': 'sconosciuto',
+      },
+    );
     return ' ($_temp0)';
   }
 
@@ -420,10 +439,13 @@ class SIt extends S {
 
   @override
   String homeMainBudgetSum(String current, String status, String available) {
-    String _temp0 = intl.Intl.selectLogic(status, {
-      'over': 'su',
-      'other': 'rimanente da',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      status,
+      {
+        'over': 'su',
+        'other': 'rimanente da',
+      },
+    );
     return '$current $_temp0 $available';
   }
 
@@ -617,11 +639,9 @@ class SIt extends S {
 
   @override
   String numPercent(double num) {
-    final intl.NumberFormat numNumberFormat = intl
-        .NumberFormat.decimalPercentPattern(
-      locale: localeName,
-      decimalDigits: 0,
-    );
+    final intl.NumberFormat numNumberFormat =
+        intl.NumberFormat.decimalPercentPattern(
+            locale: localeName, decimalDigits: 0);
     final String numString = numNumberFormat.format(num);
 
     return '$numString';
@@ -629,11 +649,9 @@ class SIt extends S {
 
   @override
   String numPercentOf(double perc, String of) {
-    final intl.NumberFormat percNumberFormat = intl
-        .NumberFormat.decimalPercentPattern(
-      locale: localeName,
-      decimalDigits: 0,
-    );
+    final intl.NumberFormat percNumberFormat =
+        intl.NumberFormat.decimalPercentPattern(
+            locale: localeName, decimalDigits: 0);
     final String percString = percNumberFormat.format(perc);
 
     return '$percString di $of';
@@ -754,11 +772,14 @@ class SIt extends S {
 
   @override
   String settingsThemeValue(String theme) {
-    String _temp0 = intl.Intl.selectLogic(theme, {
-      'dark': 'Modalità Scura',
-      'light': 'Modalità Chiara',
-      'other': 'Predefinito di sistema',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      theme,
+      {
+        'dark': 'Modalità Scura',
+        'light': 'Modalità Chiara',
+        'other': 'Predefinito di sistema',
+      },
+    );
     return '$_temp0';
   }
 
@@ -903,4 +924,50 @@ class SIt extends S {
 
   @override
   String get transactionTypeWithdrawal => 'Prelievo';
+
+  @override
+  String get geminiSettingsTitle => 'Gemini AI Settings';
+
+  @override
+  String get geminiSettingsDescription =>
+      'Configure Gemini AI to automatically extract transaction data from receipt images.';
+
+  @override
+  String get geminiApiKeyLabel => 'API Key';
+
+  @override
+  String get geminiApiKeyHint => 'Enter your Gemini API key';
+
+  @override
+  String get geminiApiKeyHelp =>
+      'Get your API key from Google AI Studio (ai.google.dev)';
+
+  @override
+  String get geminiModelLabel => 'Model Selection';
+
+  @override
+  String get geminiParseReceipt => 'Parse Receipt';
+
+  @override
+  String get geminiParsingReceipt => 'Parsing receipt with AI...';
+
+  @override
+  String get geminiConfigureFirst =>
+      'Please configure Gemini AI in settings first';
+
+  @override
+  String get geminiParseError =>
+      'Could not extract transaction data from receipt';
+
+  @override
+  String get geminiParsedDataTitle => 'AI Parsed Receipt Data';
+
+  @override
+  String get geminiUseThisData => 'Use This Data';
+
+  @override
+  String get geminiSaveImage => 'Save Image';
+
+  @override
+  String get geminiTakePhotoAndParse => 'Take Photo & Parse';
 }

@@ -1,8 +1,6 @@
-// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-import 'app_localizations.dart';
 
-// ignore_for_file: type=lint
+import 'app_localizations.dart';
 
 /// The translations for Hungarian (`hu`).
 class SHu extends S {
@@ -37,32 +35,34 @@ class SHu extends S {
 
   @override
   String accountsLiabilitiesInterest(double interest, String period) {
-    String _temp0 = intl.Intl.selectLogic(period, {
-      'weekly': 'hét',
-      'monthly': 'hónap',
-      'quarterly': 'negyedév',
-      'halfyear': 'félév',
-      'yearly': 'év',
-      'other': 'ismeretlen',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      period,
+      {
+        'weekly': 'hét',
+        'monthly': 'hónap',
+        'quarterly': 'negyedév',
+        'halfyear': 'félév',
+        'yearly': 'év',
+        'other': 'ismeretlen',
+      },
+    );
     return '$interest% kamat per $_temp0';
   }
 
   @override
   String billsAmountAndFrequency(
-    String minValue,
-    String maxvalue,
-    String frequency,
-    num skip,
-  ) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': 'Heti',
-      'monthly': 'Havi',
-      'quarterly': 'Negyedéves',
-      'halfyear': 'Féléves',
-      'yearly': 'Éves',
-      'other': 'Ismeretlen',
-    });
+      String minValue, String maxvalue, String frequency, num skip) {
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': 'Heti',
+        'monthly': 'Havi',
+        'quarterly': 'Negyedéves',
+        'halfyear': 'Féléves',
+        'yearly': 'Éves',
+        'other': 'Ismeretlen',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -83,18 +83,18 @@ class SHu extends S {
 
   @override
   String billsExactAmountAndFrequency(
-    String value,
-    String frequency,
-    num skip,
-  ) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': 'Heti',
-      'monthly': 'Havi',
-      'quarterly': 'Negyedéves',
-      'halfyear': 'Féléves',
-      'yearly': 'Éves',
-      'other': 'Ismeretlen',
-    });
+      String value, String frequency, num skip) {
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': 'Heti',
+        'monthly': 'Havi',
+        'quarterly': 'Negyedéves',
+        'halfyear': 'Féléves',
+        'yearly': 'Éves',
+        'other': 'Ismeretlen',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -114,27 +114,33 @@ class SHu extends S {
 
   @override
   String billsFrequency(String frequency) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': 'Heti',
-      'monthly': 'Havi',
-      'quarterly': 'Negyedéves',
-      'halfyear': 'Féléves',
-      'yearly': 'Éves',
-      'other': 'Ismeretlen',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': 'Heti',
+        'monthly': 'Havi',
+        'quarterly': 'Negyedéves',
+        'halfyear': 'Féléves',
+        'yearly': 'Éves',
+        'other': 'Ismeretlen',
+      },
+    );
     return '$_temp0';
   }
 
   @override
   String billsFrequencySkip(String frequency, num skip) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': 'Heti',
-      'monthly': 'Havi',
-      'quarterly': 'Negyedéves',
-      'halfyear': 'Féléves',
-      'yearly': 'Éves',
-      'other': 'Ismeretlen',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': 'Heti',
+        'monthly': 'Havi',
+        'quarterly': 'Negyedéves',
+        'halfyear': 'Féléves',
+        'yearly': 'Éves',
+        'other': 'Ismeretlen',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -285,7 +291,17 @@ class SHu extends S {
   String get formButtonTransactionAdd => 'Tranzakció Hozzáadása';
 
   @override
+  String get formButtonTransactionAddWithAI => 'Add with AI Receipt';
+
+  @override
   String get formButtonTryAgain => 'Próbálja újra';
+
+  @override
+  String get aiReceiptParsingTitle => 'AI Receipt Parser';
+
+  @override
+  String get aiReceiptParsingSubtitle =>
+      'Take a photo or upload a receipt to automatically extract transaction details';
 
   @override
   String get generalAccount => 'Számla';
@@ -384,14 +400,17 @@ class SHu extends S {
 
   @override
   String homeMainBillsInterval(String period) {
-    String _temp0 = intl.Intl.selectLogic(period, {
-      'weekly': 'heti',
-      'monthly': 'havi',
-      'quarterly': 'negyedéves',
-      'halfyear': 'féléves',
-      'yearly': 'éves',
-      'other': 'ismeretlen',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      period,
+      {
+        'weekly': 'heti',
+        'monthly': 'havi',
+        'quarterly': 'negyedéves',
+        'halfyear': 'féléves',
+        'yearly': 'éves',
+        'other': 'ismeretlen',
+      },
+    );
     return ' ($_temp0)';
   }
 
@@ -420,14 +439,20 @@ class SHu extends S {
 
   @override
   String homeMainBudgetSum(String current, String status, String available) {
-    String _temp0 = intl.Intl.selectLogic(status, {
-      'over': 'többletköltség a',
-      'other': 'maradt a',
-    });
-    String _temp1 = intl.Intl.selectLogic(status, {
-      'over': 'limithez képest',
-      'other': 'limitből',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      status,
+      {
+        'over': 'többletköltség a',
+        'other': 'maradt a',
+      },
+    );
+    String _temp1 = intl.Intl.selectLogic(
+      status,
+      {
+        'over': 'limithez képest',
+        'other': 'limitből',
+      },
+    );
     return '$current $_temp0 $available $_temp1';
   }
 
@@ -623,11 +648,9 @@ class SHu extends S {
 
   @override
   String numPercent(double num) {
-    final intl.NumberFormat numNumberFormat = intl
-        .NumberFormat.decimalPercentPattern(
-      locale: localeName,
-      decimalDigits: 0,
-    );
+    final intl.NumberFormat numNumberFormat =
+        intl.NumberFormat.decimalPercentPattern(
+            locale: localeName, decimalDigits: 0);
     final String numString = numNumberFormat.format(num);
 
     return '$numString';
@@ -635,11 +658,9 @@ class SHu extends S {
 
   @override
   String numPercentOf(double perc, String of) {
-    final intl.NumberFormat percNumberFormat = intl
-        .NumberFormat.decimalPercentPattern(
-      locale: localeName,
-      decimalDigits: 0,
-    );
+    final intl.NumberFormat percNumberFormat =
+        intl.NumberFormat.decimalPercentPattern(
+            locale: localeName, decimalDigits: 0);
     final String percString = percNumberFormat.format(perc);
 
     return '$of $percString-a';
@@ -762,11 +783,14 @@ class SHu extends S {
 
   @override
   String settingsThemeValue(String theme) {
-    String _temp0 = intl.Intl.selectLogic(theme, {
-      'dark': 'Sötét',
-      'light': 'Világos',
-      'other': 'Alapértelmezett',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      theme,
+      {
+        'dark': 'Sötét',
+        'light': 'Világos',
+        'other': 'Alapértelmezett',
+      },
+    );
     return '$_temp0';
   }
 
@@ -911,4 +935,50 @@ class SHu extends S {
 
   @override
   String get transactionTypeWithdrawal => 'Költség';
+
+  @override
+  String get geminiSettingsTitle => 'Gemini AI Settings';
+
+  @override
+  String get geminiSettingsDescription =>
+      'Configure Gemini AI to automatically extract transaction data from receipt images.';
+
+  @override
+  String get geminiApiKeyLabel => 'API Key';
+
+  @override
+  String get geminiApiKeyHint => 'Enter your Gemini API key';
+
+  @override
+  String get geminiApiKeyHelp =>
+      'Get your API key from Google AI Studio (ai.google.dev)';
+
+  @override
+  String get geminiModelLabel => 'Model Selection';
+
+  @override
+  String get geminiParseReceipt => 'Parse Receipt';
+
+  @override
+  String get geminiParsingReceipt => 'Parsing receipt with AI...';
+
+  @override
+  String get geminiConfigureFirst =>
+      'Please configure Gemini AI in settings first';
+
+  @override
+  String get geminiParseError =>
+      'Could not extract transaction data from receipt';
+
+  @override
+  String get geminiParsedDataTitle => 'AI Parsed Receipt Data';
+
+  @override
+  String get geminiUseThisData => 'Use This Data';
+
+  @override
+  String get geminiSaveImage => 'Save Image';
+
+  @override
+  String get geminiTakePhotoAndParse => 'Take Photo & Parse';
 }

@@ -32,19 +32,19 @@ class NotificationAppSettings {
   bool emptyNote = false;
 
   NotificationAppSettings.fromJson(Map<String, dynamic> json)
-    : appName = json['appName'],
-      defaultAccountId = json['defaultAccountId'],
-      includeTitle = json['includeTitle'] ?? true,
-      autoAdd = json['autoAdd'] ?? false,
-      emptyNote = json['emptyNote'] ?? false;
+      : appName = json['appName'],
+        defaultAccountId = json['defaultAccountId'],
+        includeTitle = json['includeTitle'] ?? true,
+        autoAdd = json['autoAdd'] ?? false,
+        emptyNote = json['emptyNote'] ?? false;
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    'appName': appName,
-    'defaultAccountId': defaultAccountId,
-    'includeTitle': includeTitle,
-    'autoAdd': autoAdd,
-    'emptyNote': emptyNote,
-  };
+        'appName': appName,
+        'defaultAccountId': defaultAccountId,
+        'includeTitle': includeTitle,
+        'autoAdd': autoAdd,
+        'emptyNote': emptyNote,
+      };
 }
 
 // in default order
@@ -141,6 +141,8 @@ class SettingsProvider with ChangeNotifier {
   static const String settingsDashboardOrder = "DASHBOARD_ORDER";
   static const String settingsDashboardHidden = "DASHBOARD_HIDDEN";
   static const String settingTransactionDateFilter = "TX_DATE_FILTER";
+  static const String settingGeminiApiKey = "GEMINI_API_KEY";
+  static const String settingGeminiModel = "GEMINI_MODEL";
 
   bool get debug => _loaded ? _boolSettings[BoolSettings.debug] : false;
   bool get lock => _loaded ? _boolSettings[BoolSettings.lock] : false;
@@ -190,6 +192,12 @@ class SettingsProvider with ChangeNotifier {
   TransactionDateFilter _transactionDateFilter = TransactionDateFilter.all;
 
   TransactionDateFilter get transactionDateFilter => _transactionDateFilter;
+
+  String? _geminiApiKey;
+  String? get geminiApiKey => _geminiApiKey;
+
+  String _geminiModel = "gemini-2.0-flash-exp";
+  String get geminiModel => _geminiModel;
 
   Future<void> migrateLegacy(SharedPreferencesAsync prefs) async {
     log.config("trying to migrate old prefs");
@@ -332,24 +340,21 @@ class SettingsProvider with ChangeNotifier {
         await prefs.getStringList(settingNLUsedApps) ?? <String>[];
 
     final int? billsLayoutIndex = await prefs.getInt(settingBillsDefaultLayout);
-    _billsLayout =
-        billsLayoutIndex == null
-            ? BillsLayout.grouped
-            : BillsLayout.values[billsLayoutIndex];
+    _billsLayout = billsLayoutIndex == null
+        ? BillsLayout.grouped
+        : BillsLayout.values[billsLayoutIndex];
 
     final int? billsSortIndex = await prefs.getInt(settingBillsDefaultSort);
-    _billsSort =
-        billsSortIndex == null
-            ? BillsSort.name
-            : BillsSort.values[billsSortIndex];
+    _billsSort = billsSortIndex == null
+        ? BillsSort.name
+        : BillsSort.values[billsSortIndex];
 
     final int? billsSortOrderIndex = await prefs.getInt(
       settingBillsDefaultSortOrder,
     );
-    _billsSortOrder =
-        billsSortOrderIndex == null
-            ? SortingOrder.ascending
-            : SortingOrder.values[billsSortOrderIndex];
+    _billsSortOrder = billsSortOrderIndex == null
+        ? SortingOrder.ascending
+        : SortingOrder.values[billsSortOrderIndex];
 
     _categoriesSumExcluded =
         await prefs.getStringList(settingsCategoriesSumExcluded) ?? <String>[];
@@ -394,10 +399,14 @@ class SettingsProvider with ChangeNotifier {
 
     // Load new transaction date filter setting
     int? txDateFilterIndex = await prefs.getInt(settingTransactionDateFilter);
-    _transactionDateFilter =
-        txDateFilterIndex == null
-            ? TransactionDateFilter.all
-            : TransactionDateFilter.values[txDateFilterIndex];
+    _transactionDateFilter = txDateFilterIndex == null
+        ? TransactionDateFilter.all
+        : TransactionDateFilter.values[txDateFilterIndex];
+
+    // Load Gemini AI settings
+    _geminiApiKey = await prefs.getString(settingGeminiApiKey);
+    _geminiModel =
+        await prefs.getString(settingGeminiModel) ?? "gemini-2.0-flash-exp";
 
     _loaded = _loading = true;
     log.finest(() => "notify SettingsProvider->loadSettings()");
@@ -514,7 +523,7 @@ class SettingsProvider with ChangeNotifier {
   Future<List<String>> notificationKnownApps({bool filterUsed = false}) async {
     final List<String> apps =
         await SharedPreferencesAsync().getStringList(settingNLKnownApps) ??
-        <String>[];
+            <String>[];
     if (filterUsed) {
       final List<String> knownApps = await notificationUsedApps();
       return apps
@@ -568,7 +577,7 @@ class SettingsProvider with ChangeNotifier {
   Future<List<String>> notificationUsedApps() async {
     final List<String> apps =
         await SharedPreferencesAsync().getStringList(settingNLUsedApps) ??
-        <String>[];
+            <String>[];
     if (!const ListEquality<String>().equals(apps, _notificationApps)) {
       _notificationApps = apps;
 
@@ -582,8 +591,7 @@ class SettingsProvider with ChangeNotifier {
   Future<NotificationAppSettings> notificationGetAppSettings(
     String packageName,
   ) async {
-    final String json =
-        await SharedPreferencesAsync().getString(
+    final String json = await SharedPreferencesAsync().getString(
           "$settingNLAppPrefix$packageName",
         ) ??
         "";
@@ -748,6 +756,34 @@ class SettingsProvider with ChangeNotifier {
     );
 
     log.finest(() => "notify SettingsProvider->setTransactionDateFilter()");
+    notifyListeners();
+  }
+
+  Future<void> setGeminiApiKey(String? apiKey) async {
+    if (apiKey == _geminiApiKey) {
+      return;
+    }
+
+    _geminiApiKey = apiKey;
+    if (apiKey == null || apiKey.isEmpty) {
+      await SharedPreferencesAsync().remove(settingGeminiApiKey);
+    } else {
+      await SharedPreferencesAsync().setString(settingGeminiApiKey, apiKey);
+    }
+
+    log.finest(() => "notify SettingsProvider->setGeminiApiKey()");
+    notifyListeners();
+  }
+
+  Future<void> setGeminiModel(String model) async {
+    if (model == _geminiModel) {
+      return;
+    }
+
+    _geminiModel = model;
+    await SharedPreferencesAsync().setString(settingGeminiModel, model);
+
+    log.finest(() => "notify SettingsProvider->setGeminiModel()");
     notifyListeners();
   }
 }

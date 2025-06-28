@@ -24,8 +24,6 @@ import 'app_localizations_sl.dart';
 import 'app_localizations_sv.dart';
 import 'app_localizations_zh.dart';
 
-// ignore_for_file: type=lint
-
 /// Callers can lookup localized strings with an instance of S
 /// returned by `S.of(context)`.
 ///
@@ -79,7 +77,7 @@ import 'app_localizations_zh.dart';
 /// property.
 abstract class S {
   S(String locale)
-    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+      : localeName = intl.Intl.canonicalizedLocale(locale.toString());
 
   final String localeName;
 
@@ -101,11 +99,11 @@ abstract class S {
   /// of delegates is preferred or required.
   static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
       <LocalizationsDelegate<dynamic>>[
-        delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-      ];
+    delegate,
+    GlobalMaterialLocalizations.delegate,
+    GlobalCupertinoLocalizations.delegate,
+    GlobalWidgetsLocalizations.delegate,
+  ];
 
   /// A list of this localizations delegate's supported locales.
   static const List<Locale> supportedLocales = <Locale>[
@@ -126,7 +124,7 @@ abstract class S {
     Locale('ru'),
     Locale('sl'),
     Locale('sv'),
-    Locale('zh'),
+    Locale('zh')
   ];
 
   /// Firefly Translation String: account_role_cashWalletAsset
@@ -194,11 +192,7 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Subscription matches transactions between {minValue} and {maxvalue}. Repeats {frequency, select, weekly{weekly} monthly{monthly} quarterly{quarterly} halfyear{half-yearly} yearly{yearly} other{unknown}}{skip, plural, =0{} other{, skips over {skip}}}.'**
   String billsAmountAndFrequency(
-    String minValue,
-    String maxvalue,
-    String frequency,
-    num skip,
-  );
+      String minValue, String maxvalue, String frequency, num skip);
 
   /// Text for layout change button tooltip
   ///
@@ -494,11 +488,29 @@ abstract class S {
   /// **'Add Transaction'**
   String get formButtonTransactionAdd;
 
-  /// Button Label: Try that thing again (login etc)
+  /// Button Label: Add Transaction with AI Receipt Parsing
   ///
   /// In en, this message translates to:
-  /// **'Try again'**
+  /// **'Add with AI Receipt'**
+  String get formButtonTransactionAddWithAI;
+
+  /// Button Label: Try Again
+  ///
+  /// In en, this message translates to:
+  /// **'Try Again'**
   String get formButtonTryAgain;
+
+  /// Title for AI receipt parsing workflow
+  ///
+  /// In en, this message translates to:
+  /// **'AI Receipt Parser'**
+  String get aiReceiptParsingTitle;
+
+  /// Subtitle explaining AI receipt parsing feature
+  ///
+  /// In en, this message translates to:
+  /// **'Take a photo or upload a receipt to automatically extract transaction details'**
+  String get aiReceiptParsingSubtitle;
 
   /// Asset/Debt (Bank) Account
   ///
@@ -1283,7 +1295,7 @@ abstract class S {
   /// Button Label: Attachments
   ///
   /// In en, this message translates to:
-  /// **'Attachments'**
+  /// **'Attachments (AI receipt parsing available)'**
   String get transactionAttachments;
 
   /// Confirmation text to delete transaction
@@ -1513,6 +1525,90 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Withdrawal'**
   String get transactionTypeWithdrawal;
+
+  /// Title for Gemini AI settings page
+  ///
+  /// In en, this message translates to:
+  /// **'Gemini AI Settings'**
+  String get geminiSettingsTitle;
+
+  /// Description for Gemini AI settings
+  ///
+  /// In en, this message translates to:
+  /// **'Configure Gemini AI to automatically extract transaction data from receipt images.'**
+  String get geminiSettingsDescription;
+
+  /// Label for Gemini API key field
+  ///
+  /// In en, this message translates to:
+  /// **'API Key'**
+  String get geminiApiKeyLabel;
+
+  /// Hint text for Gemini API key field
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your Gemini API key'**
+  String get geminiApiKeyHint;
+
+  /// Help text for getting Gemini API key
+  ///
+  /// In en, this message translates to:
+  /// **'Get your API key from Google AI Studio (ai.google.dev)'**
+  String get geminiApiKeyHelp;
+
+  /// Label for Gemini model selection
+  ///
+  /// In en, this message translates to:
+  /// **'Model Selection'**
+  String get geminiModelLabel;
+
+  /// Button text for parsing receipt with AI
+  ///
+  /// In en, this message translates to:
+  /// **'Parse Receipt'**
+  String get geminiParseReceipt;
+
+  /// Loading message when parsing receipt
+  ///
+  /// In en, this message translates to:
+  /// **'Parsing receipt with AI...'**
+  String get geminiParsingReceipt;
+
+  /// Error message when Gemini is not configured
+  ///
+  /// In en, this message translates to:
+  /// **'Please configure Gemini AI in settings first'**
+  String get geminiConfigureFirst;
+
+  /// Error message when receipt parsing fails
+  ///
+  /// In en, this message translates to:
+  /// **'Could not extract transaction data from receipt'**
+  String get geminiParseError;
+
+  /// Title for dialog showing parsed receipt data
+  ///
+  /// In en, this message translates to:
+  /// **'AI Parsed Receipt Data'**
+  String get geminiParsedDataTitle;
+
+  /// Button text to use AI parsed data
+  ///
+  /// In en, this message translates to:
+  /// **'Use This Data'**
+  String get geminiUseThisData;
+
+  /// Button text to save receipt image
+  ///
+  /// In en, this message translates to:
+  /// **'Save Image'**
+  String get geminiSaveImage;
+
+  /// Button text to take photo and parse with AI
+  ///
+  /// In en, this message translates to:
+  /// **'Take Photo & Parse'**
+  String get geminiTakePhotoAndParse;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {
@@ -1525,25 +1621,25 @@ class _SDelegate extends LocalizationsDelegate<S> {
 
   @override
   bool isSupported(Locale locale) => <String>[
-    'ca',
-    'cs',
-    'da',
-    'de',
-    'en',
-    'es',
-    'fa',
-    'fr',
-    'hu',
-    'id',
-    'it',
-    'pl',
-    'pt',
-    'ro',
-    'ru',
-    'sl',
-    'sv',
-    'zh',
-  ].contains(locale.languageCode);
+        'ca',
+        'cs',
+        'da',
+        'de',
+        'en',
+        'es',
+        'fa',
+        'fr',
+        'hu',
+        'id',
+        'it',
+        'pl',
+        'pt',
+        'ro',
+        'ru',
+        'sl',
+        'sv',
+        'zh'
+      ].contains(locale.languageCode);
 
   @override
   bool shouldReload(_SDelegate old) => false;
@@ -1591,9 +1687,8 @@ S lookupS(Locale locale) {
   }
 
   throw FlutterError(
-    'S.delegate failed to load unsupported locale "$locale". This is likely '
-    'an issue with the localizations generation tool. Please file an issue '
-    'on GitHub with a reproducible sample app and the gen-l10n configuration '
-    'that was used.',
-  );
+      'S.delegate failed to load unsupported locale "$locale". This is likely '
+      'an issue with the localizations generation tool. Please file an issue '
+      'on GitHub with a reproducible sample app and the gen-l10n configuration '
+      'that was used.');
 }

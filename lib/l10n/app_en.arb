@@ -331,9 +331,21 @@
     "@formButtonTransactionAdd": {
         "description": "Button Label: Add Transaction"
     },
-    "formButtonTryAgain": "Try again",
+    "formButtonTransactionAddWithAI": "Add with AI Receipt",
+    "@formButtonTransactionAddWithAI": {
+        "description": "Button Label: Add Transaction with AI Receipt Parsing"
+    },
+    "formButtonTryAgain": "Try Again",
     "@formButtonTryAgain": {
-        "description": "Button Label: Try that thing again (login etc)"
+        "description": "Button Label: Try Again"
+    },
+    "aiReceiptParsingTitle": "AI Receipt Parser",
+    "@aiReceiptParsingTitle": {
+        "description": "Title for AI receipt parsing workflow"
+    },
+    "aiReceiptParsingSubtitle": "Take a photo or upload a receipt to automatically extract transaction details",
+    "@aiReceiptParsingSubtitle": {
+        "description": "Subtitle explaining AI receipt parsing feature"
     },
     "generalAccount": "Account",
     "@generalAccount": {
@@ -987,7 +999,7 @@
     "@settingsVersionChecking": {
         "description": "Shown while checking for app version"
     },
-    "transactionAttachments": "Attachments",
+    "transactionAttachments": "Attachments (AI receipt parsing available)",
     "@transactionAttachments": {
         "description": "Button Label: Attachments"
     },
@@ -1152,5 +1164,61 @@
     "transactionTypeWithdrawal": "Withdrawal",
     "@transactionTypeWithdrawal": {
         "description": "Withdrawal transaction type"
+    },
+    "geminiSettingsTitle": "Gemini AI Settings",
+    "@geminiSettingsTitle": {
+        "description": "Title for Gemini AI settings page"
+    },
+    "geminiSettingsDescription": "Configure Gemini AI to automatically extract transaction data from receipt images.",
+    "@geminiSettingsDescription": {
+        "description": "Description for Gemini AI settings"
+    },
+    "geminiApiKeyLabel": "API Key",
+    "@geminiApiKeyLabel": {
+        "description": "Label for Gemini API key field"
+    },
+    "geminiApiKeyHint": "Enter your Gemini API key",
+    "@geminiApiKeyHint": {
+        "description": "Hint text for Gemini API key field"
+    },
+    "geminiApiKeyHelp": "Get your API key from Google AI Studio (ai.google.dev)",
+    "@geminiApiKeyHelp": {
+        "description": "Help text for getting Gemini API key"
+    },
+    "geminiModelLabel": "Model Selection",
+    "@geminiModelLabel": {
+        "description": "Label for Gemini model selection"
+    },
+    "geminiParseReceipt": "Parse Receipt",
+    "@geminiParseReceipt": {
+        "description": "Button text for parsing receipt with AI"
+    },
+    "geminiParsingReceipt": "Parsing receipt with AI...",
+    "@geminiParsingReceipt": {
+        "description": "Loading message when parsing receipt"
+    },
+    "geminiConfigureFirst": "Please configure Gemini AI in settings first",
+    "@geminiConfigureFirst": {
+        "description": "Error message when Gemini is not configured"
+    },
+    "geminiParseError": "Could not extract transaction data from receipt",
+    "@geminiParseError": {
+        "description": "Error message when receipt parsing fails"
+    },
+    "geminiParsedDataTitle": "AI Parsed Receipt Data",
+    "@geminiParsedDataTitle": {
+        "description": "Title for dialog showing parsed receipt data"
+    },
+    "geminiUseThisData": "Use This Data",
+    "@geminiUseThisData": {
+        "description": "Button text to use AI parsed data"
+    },
+    "geminiSaveImage": "Save Image",
+    "@geminiSaveImage": {
+        "description": "Button text to save receipt image"
+    },
+    "geminiTakePhotoAndParse": "Take Photo & Parse",
+    "@geminiTakePhotoAndParse": {
+        "description": "Button text to take photo and parse with AI"
     }
 }

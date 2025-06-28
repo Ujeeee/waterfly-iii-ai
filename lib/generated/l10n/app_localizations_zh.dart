@@ -1,8 +1,6 @@
-// ignore: unused_import
 import 'package:intl/intl.dart' as intl;
-import 'app_localizations.dart';
 
-// ignore_for_file: type=lint
+import 'app_localizations.dart';
 
 /// The translations for Chinese (`zh`).
 class SZh extends S {
@@ -37,32 +35,34 @@ class SZh extends S {
 
   @override
   String accountsLiabilitiesInterest(double interest, String period) {
-    String _temp0 = intl.Intl.selectLogic(period, {
-      'weekly': '每周',
-      'monthly': '每月',
-      'quarterly': '每季度',
-      'halfyear': '每半年',
-      'yearly': '每年',
-      'other': '其它',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      period,
+      {
+        'weekly': '每周',
+        'monthly': '每月',
+        'quarterly': '每季度',
+        'halfyear': '每半年',
+        'yearly': '每年',
+        'other': '其它',
+      },
+    );
     return '$_temp0的利率为 $interest%';
   }
 
   @override
   String billsAmountAndFrequency(
-    String minValue,
-    String maxvalue,
-    String frequency,
-    num skip,
-  ) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': '每周',
-      'monthly': '每月',
-      'quarterly': '每季度',
-      'halfyear': '每半年',
-      'yearly': '每年',
-      'other': '未知',
-    });
+      String minValue, String maxvalue, String frequency, num skip) {
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': '每周',
+        'monthly': '每月',
+        'quarterly': '每季度',
+        'halfyear': '每半年',
+        'yearly': '每年',
+        'other': '未知',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -83,18 +83,18 @@ class SZh extends S {
 
   @override
   String billsExactAmountAndFrequency(
-    String value,
-    String frequency,
-    num skip,
-  ) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': '每周',
-      'monthly': '每月',
-      'quarterly': '每季度',
-      'halfyear': '每半年',
-      'yearly': '每年',
-      'other': '未知',
-    });
+      String value, String frequency, num skip) {
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': '每周',
+        'monthly': '每月',
+        'quarterly': '每季度',
+        'halfyear': '每半年',
+        'yearly': '每年',
+        'other': '未知',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -114,27 +114,33 @@ class SZh extends S {
 
   @override
   String billsFrequency(String frequency) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': '每周',
-      'monthly': '每月',
-      'quarterly': '每季度',
-      'halfyear': '每半年',
-      'yearly': '每年',
-      'other': '未知',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': '每周',
+        'monthly': '每月',
+        'quarterly': '每季度',
+        'halfyear': '每半年',
+        'yearly': '每年',
+        'other': '未知',
+      },
+    );
     return '$_temp0';
   }
 
   @override
   String billsFrequencySkip(String frequency, num skip) {
-    String _temp0 = intl.Intl.selectLogic(frequency, {
-      'weekly': '每周',
-      'monthly': '每月',
-      'quarterly': '每季度',
-      'halfyear': '每半年',
-      'yearly': '每年',
-      'other': '未知',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      frequency,
+      {
+        'weekly': '每周',
+        'monthly': '每月',
+        'quarterly': '每季度',
+        'halfyear': '每半年',
+        'yearly': '每年',
+        'other': '未知',
+      },
+    );
     String _temp1 = intl.Intl.pluralLogic(
       skip,
       locale: localeName,
@@ -282,7 +288,17 @@ class SZh extends S {
   String get formButtonTransactionAdd => '添加交易';
 
   @override
+  String get formButtonTransactionAddWithAI => 'Add with AI Receipt';
+
+  @override
   String get formButtonTryAgain => '再试一次';
+
+  @override
+  String get aiReceiptParsingTitle => 'AI Receipt Parser';
+
+  @override
+  String get aiReceiptParsingSubtitle =>
+      'Take a photo or upload a receipt to automatically extract transaction details';
 
   @override
   String get generalAccount => '账户';
@@ -381,14 +397,17 @@ class SZh extends S {
 
   @override
   String homeMainBillsInterval(String period) {
-    String _temp0 = intl.Intl.selectLogic(period, {
-      'weekly': '每周',
-      'monthly': '每月',
-      'quarterly': '每季度',
-      'halfyear': '每半年',
-      'yearly': '每年',
-      'other': '其它',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      period,
+      {
+        'weekly': '每周',
+        'monthly': '每月',
+        'quarterly': '每季度',
+        'halfyear': '每半年',
+        'yearly': '每年',
+        'other': '其它',
+      },
+    );
     return ' （$_temp0）';
   }
 
@@ -417,10 +436,13 @@ class SZh extends S {
 
   @override
   String homeMainBudgetSum(String current, String status, String available) {
-    String _temp0 = intl.Intl.selectLogic(status, {
-      'over': '超出',
-      'other': '剩余',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      status,
+      {
+        'over': '超出',
+        'other': '剩余',
+      },
+    );
     return '总计 $available $_temp0 $current';
   }
 
@@ -609,11 +631,9 @@ class SZh extends S {
 
   @override
   String numPercent(double num) {
-    final intl.NumberFormat numNumberFormat = intl
-        .NumberFormat.decimalPercentPattern(
-      locale: localeName,
-      decimalDigits: 0,
-    );
+    final intl.NumberFormat numNumberFormat =
+        intl.NumberFormat.decimalPercentPattern(
+            locale: localeName, decimalDigits: 0);
     final String numString = numNumberFormat.format(num);
 
     return '$numString';
@@ -621,11 +641,9 @@ class SZh extends S {
 
   @override
   String numPercentOf(double perc, String of) {
-    final intl.NumberFormat percNumberFormat = intl
-        .NumberFormat.decimalPercentPattern(
-      locale: localeName,
-      decimalDigits: 0,
-    );
+    final intl.NumberFormat percNumberFormat =
+        intl.NumberFormat.decimalPercentPattern(
+            locale: localeName, decimalDigits: 0);
     final String percString = percNumberFormat.format(perc);
 
     return '$of 中的 $percString';
@@ -741,11 +759,14 @@ class SZh extends S {
 
   @override
   String settingsThemeValue(String theme) {
-    String _temp0 = intl.Intl.selectLogic(theme, {
-      'dark': '暗色模式',
-      'light': '光明模式',
-      'other': '系统默认',
-    });
+    String _temp0 = intl.Intl.selectLogic(
+      theme,
+      {
+        'dark': '暗色模式',
+        'light': '光明模式',
+        'other': '系统默认',
+      },
+    );
     return '$_temp0';
   }
 
@@ -881,4 +902,50 @@ class SZh extends S {
 
   @override
   String get transactionTypeWithdrawal => '取款';
+
+  @override
+  String get geminiSettingsTitle => 'Gemini AI Settings';
+
+  @override
+  String get geminiSettingsDescription =>
+      'Configure Gemini AI to automatically extract transaction data from receipt images.';
+
+  @override
+  String get geminiApiKeyLabel => 'API Key';
+
+  @override
+  String get geminiApiKeyHint => 'Enter your Gemini API key';
+
+  @override
+  String get geminiApiKeyHelp =>
+      'Get your API key from Google AI Studio (ai.google.dev)';
+
+  @override
+  String get geminiModelLabel => 'Model Selection';
+
+  @override
+  String get geminiParseReceipt => 'Parse Receipt';
+
+  @override
+  String get geminiParsingReceipt => 'Parsing receipt with AI...';
+
+  @override
+  String get geminiConfigureFirst =>
+      'Please configure Gemini AI in settings first';
+
+  @override
+  String get geminiParseError =>
+      'Could not extract transaction data from receipt';
+
+  @override
+  String get geminiParsedDataTitle => 'AI Parsed Receipt Data';
+
+  @override
+  String get geminiUseThisData => 'Use This Data';
+
+  @override
+  String get geminiSaveImage => 'Save Image';
+
+  @override
+  String get geminiTakePhotoAndParse => 'Take Photo & Parse';
 }
