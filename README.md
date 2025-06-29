@@ -63,12 +63,14 @@ This enhanced version of Waterfly III includes AI-powered receipt parsing capabi
 ### **Usage**
 
 **Method 1: Quick AI Receipt Parsing**
+
 1. On the main screen, tap the AI button (🤖) - the top floating action button
 2. Take a photo of your receipt or upload an existing image
 3. The AI will automatically extract transaction data
 4. Review and confirm the parsed information
 
 **Method 2: Traditional Transaction Entry with AI Enhancement**
+
 1. Tap the Plus button (+) - the bottom floating action button
 2. When adding a transaction, tap the attachments icon (📎)
 3. Take a photo of your receipt or upload an existing image
@@ -77,6 +79,7 @@ This enhanced version of Waterfly III includes AI-powered receipt parsing capabi
 6. Tap "Auto-Fill Transaction Form" to populate the transaction
 
 ### **Features**
+
 - **Dual FAB Interface**: Clean, icon-only floating action buttons for quick access
   - 🤖 AI Receipt Parser (top button)
   - ➕ Standard Transaction Entry (bottom button)
