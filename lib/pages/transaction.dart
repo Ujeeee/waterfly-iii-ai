@@ -955,7 +955,10 @@ class _TransactionPageState extends State<TransactionPage>
 
       // Fill date
       if (parsedData.date != null) {
-        _date = _tzHandler.sTime(parsedData.date!).toLocal();
+        // AI parsed date is already a local DateTime, convert to TZDateTime using device timezone
+        _date = _tzHandler.dTime(parsedData.date!);
+        print(
+            'Transaction form: Setting date to: $_date (original: ${parsedData.date})');
       }
 
       // Fill destination account (merchant)
@@ -2786,6 +2789,16 @@ class _DateTimePickerState extends State<DateTimePicker> {
     _timeTextController = TextEditingController(
       text: DateFormat.Hm().format(_selectedDateTime),
     );
+  }
+
+  @override
+  void didUpdateWidget(DateTimePicker oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.initialDateTime != widget.initialDateTime) {
+      _selectedDateTime = widget.initialDateTime;
+      _dateTextController.text = DateFormat.yMMMd().format(_selectedDateTime);
+      _timeTextController.text = DateFormat.Hm().format(_selectedDateTime);
+    }
   }
 
   @override

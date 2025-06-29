@@ -2,7 +2,6 @@ import 'package:animations/animations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:waterflyiii/auth.dart';
-import 'package:waterflyiii/generated/l10n/app_localizations.dart';
 import 'package:waterflyiii/pages/ai_receipt_parser.dart';
 import 'package:waterflyiii/pages/transaction.dart';
 
@@ -36,15 +35,14 @@ class _NewTransactionFabState extends State<NewTransactionFab> {
             ),
             closedElevation: 6,
             closedBuilder: (BuildContext context, Function openContainer) {
-              return FloatingActionButton.extended(
+              return FloatingActionButton(
                 onPressed: () => openContainer(),
                 backgroundColor:
                     Theme.of(context).colorScheme.secondaryContainer,
                 foregroundColor:
                     Theme.of(context).colorScheme.onSecondaryContainer,
-                icon: const Icon(Icons.smart_toy),
-                label: Text(S.of(context).formButtonTransactionAddWithAI),
                 heroTag: "aiTransaction",
+                child: const Icon(Icons.smart_toy),
               );
             },
             onClosed: (bool? refresh) {
@@ -73,9 +71,8 @@ class _NewTransactionFabState extends State<NewTransactionFab> {
           closedBuilder: (BuildContext context, Function openContainer) {
             return FloatingActionButton(
               onPressed: () => openContainer(),
-              tooltip: S.of(context).formButtonTransactionAdd,
-              child: const Icon(Icons.add),
               heroTag: "mainTransaction",
+              child: const Icon(Icons.add),
             );
           },
           onClosed: (bool? refresh) {

@@ -775,6 +775,13 @@ class ReceiptParseResultDialog extends StatelessWidget {
                 DateFormat.yMd().format(transactionData.date!),
                 style: theme.textTheme.bodyLarge,
               ),
+              // Debug info
+              Text(
+                'DEBUG: ${transactionData.date!.toString()}',
+                style: theme.textTheme.bodySmall?.copyWith(
+                  color: theme.colorScheme.onSurfaceVariant,
+                ),
+              ),
               const SizedBox(height: 12),
             ],
             if (transactionData.category != null) ...[
