@@ -133,6 +133,24 @@ _All made with a Google Pixel 8, showing Waterfly III v1.0.0_
 
 The app is built using [Flutter](https://flutter.dev/), and tries to keep to the [Material 3](https://m3.material.io/) design guidelines. Additionally, I try to keep the app as "lean" as possible, **without any trackers** or unneeded dependency on external packages.
 
+## Known Issues Fixed
+
+### Android Back Button Issue (v1.2.0+)
+**Issue**: App would minimize/close when pressing the Android system back button instead of navigating properly.
+
+**Root Cause**: A combination of factors interfered with Flutter's navigation:
+- Android 13+ predictive back gestures (`enableOnBackInvokedCallback="true"`) conflicting with Flutter navigation
+- Custom page transitions (`CupertinoPageTransitionsBuilder`) causing navigation conflicts  
+- Missing root-level back button handling
+
+**Solution**: 
+- Disabled `enableOnBackInvokedCallback` in AndroidManifest.xml
+- Removed custom page transitions that interfered with navigation
+- Added root-level `PopScope` to handle edge cases
+- Simplified transaction form back button handling
+
+**Result**: Back button now properly navigates between screens. AppBar back buttons continue to work as expected.
+
 ## Motivation
 
 Having troubles with [Bluecoins](https://play.google.com/store/apps/details?id=com.rammigsoftware.bluecoins) syncing across devices and not always storing attachments online, I was looking for a self-hosted alternative and discovered [Firefly III](https://www.firefly-iii.org/). After a [quick script to migrate from Bluecoins to Firefly III](https://github.com/dreautall/bluecoins-to-fireflyiii), the only thing left was to download an app to easily track expenses on-the-go… or so I thought.
