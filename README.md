@@ -136,14 +136,17 @@ The app is built using [Flutter](https://flutter.dev/), and tries to keep to the
 ## Known Issues Fixed
 
 ### Android Back Button Issue (v1.2.0+)
+
 **Issue**: App would minimize/close when pressing the Android system back button instead of navigating properly.
 
 **Root Cause**: A combination of factors interfered with Flutter's navigation:
+
 - Android 13+ predictive back gestures (`enableOnBackInvokedCallback="true"`) conflicting with Flutter navigation
-- Custom page transitions (`CupertinoPageTransitionsBuilder`) causing navigation conflicts  
+- Custom page transitions (`CupertinoPageTransitionsBuilder`) causing navigation conflicts
 - Missing root-level back button handling
 
-**Solution**: 
+**Solution**:
+
 - Disabled `enableOnBackInvokedCallback` in AndroidManifest.xml
 - Removed custom page transitions that interfered with navigation
 - Added root-level `PopScope` to handle edge cases

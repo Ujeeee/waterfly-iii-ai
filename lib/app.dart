@@ -255,20 +255,20 @@ class _WaterflyAppState extends State<WaterflyApp> {
                 } else {
                   log.finest(() => "signing in");
                   context.read<FireflyService>().signInFromStorage().then(
-                    (bool _) => setState(() {
-                      log.finest(() => "set _startup = false");
-                      _authed = true;
-                      _startup = false;
-                    }),
-                  );
+                        (bool _) => setState(() {
+                          log.finest(() => "set _startup = false");
+                          _authed = true;
+                          _startup = false;
+                        }),
+                      );
                 }
               }
             } else {
               signedIn = context.select((FireflyService f) => f.signedIn);
               if (signedIn) {
                 context.read<FireflyService>().tzHandler.setUseServerTime(
-                  context.read<SettingsProvider>().useServerTime,
-                );
+                      context.read<SettingsProvider>().useServerTime,
+                    );
               }
               log.config("signedIn: $signedIn");
             }
@@ -281,48 +281,48 @@ class _WaterflyAppState extends State<WaterflyApp> {
                 log.warning("PopScope invoked at root level - ignoring");
               },
               child: MaterialApp(
-              title: 'Waterfly III',
-              theme: ThemeData(
-                brightness: Brightness.light,
-                colorScheme:
-                    context.select((SettingsProvider s) => s.dynamicColors)
-                        ? cSchemeDynamicLight?.harmonized() ?? cSchemeLight
-                        : cSchemeLight,
-                useMaterial3: true,
-                // See https://github.com/flutter/flutter/issues/131042#issuecomment-1690737834
-                appBarTheme: const AppBarTheme(shape: RoundedRectangleBorder()),
-              ),
-              darkTheme: ThemeData(
-                brightness: Brightness.dark,
-                colorScheme:
-                    context.select((SettingsProvider s) => s.dynamicColors)
-                        ? cSchemeDynamicDark?.harmonized() ?? cSchemeDark
-                        : cSchemeDark,
-                useMaterial3: true,
-              ),
-              themeMode: context.select((SettingsProvider s) => s.theme),
-              localizationsDelegates: S.localizationsDelegates,
-              supportedLocales: S.supportedLocales,
-              locale: context.select((SettingsProvider s) => s.locale),
-              navigatorKey: navigatorKey,
-              home:
-                  ((_startup || !_authed) ||
-                          context.select(
-                            (FireflyService f) =>
-                                f.storageSignInException != null,
-                          ))
-                      ? const SplashPage()
-                      : signedIn
-                      ? (_notificationPayload != null ||
-                              _quickAction == "action_transaction_add" ||
-                              (_filesSharedToApp != null &&
-                                  _filesSharedToApp!.isNotEmpty))
-                          ? TransactionPage(
-                            notification: _notificationPayload,
-                            files: _filesSharedToApp,
-                          )
-                          : const NavPage()
-                      : const LoginPage(),
+                title: 'Waterfly III',
+                theme: ThemeData(
+                  brightness: Brightness.light,
+                  colorScheme:
+                      context.select((SettingsProvider s) => s.dynamicColors)
+                          ? cSchemeDynamicLight?.harmonized() ?? cSchemeLight
+                          : cSchemeLight,
+                  useMaterial3: true,
+                  // See https://github.com/flutter/flutter/issues/131042#issuecomment-1690737834
+                  appBarTheme:
+                      const AppBarTheme(shape: RoundedRectangleBorder()),
+                ),
+                darkTheme: ThemeData(
+                  brightness: Brightness.dark,
+                  colorScheme:
+                      context.select((SettingsProvider s) => s.dynamicColors)
+                          ? cSchemeDynamicDark?.harmonized() ?? cSchemeDark
+                          : cSchemeDark,
+                  useMaterial3: true,
+                ),
+                themeMode: context.select((SettingsProvider s) => s.theme),
+                localizationsDelegates: S.localizationsDelegates,
+                supportedLocales: S.supportedLocales,
+                locale: context.select((SettingsProvider s) => s.locale),
+                navigatorKey: navigatorKey,
+                home: ((_startup || !_authed) ||
+                        context.select(
+                          (FireflyService f) =>
+                              f.storageSignInException != null,
+                        ))
+                    ? const SplashPage()
+                    : signedIn
+                        ? (_notificationPayload != null ||
+                                _quickAction == "action_transaction_add" ||
+                                (_filesSharedToApp != null &&
+                                    _filesSharedToApp!.isNotEmpty))
+                            ? TransactionPage(
+                                notification: _notificationPayload,
+                                files: _filesSharedToApp,
+                              )
+                            : const NavPage()
+                        : const LoginPage(),
               ),
             );
           },
