@@ -273,7 +273,14 @@ class _WaterflyAppState extends State<WaterflyApp> {
               log.config("signedIn: $signedIn");
             }
 
-            return MaterialApp(
+            return PopScope(
+              canPop: false,
+              onPopInvoked: (bool didPop) {
+                // This should never be called since we're at the root level
+                // If it is called, just ignore it to prevent app from closing
+                log.warning("PopScope invoked at root level - ignoring");
+              },
+              child: MaterialApp(
               title: 'Waterfly III',
               theme: ThemeData(
                 brightness: Brightness.light,
@@ -284,12 +291,6 @@ class _WaterflyAppState extends State<WaterflyApp> {
                 useMaterial3: true,
                 // See https://github.com/flutter/flutter/issues/131042#issuecomment-1690737834
                 appBarTheme: const AppBarTheme(shape: RoundedRectangleBorder()),
-                pageTransitionsTheme: const PageTransitionsTheme(
-                  builders: <TargetPlatform, PageTransitionsBuilder>{
-                    TargetPlatform.android:
-                        PredictiveBackPageTransitionsBuilder(),
-                  },
-                ),
               ),
               darkTheme: ThemeData(
                 brightness: Brightness.dark,
@@ -322,6 +323,7 @@ class _WaterflyAppState extends State<WaterflyApp> {
                           )
                           : const NavPage()
                       : const LoginPage(),
+              ),
             );
           },
         );
