@@ -69,6 +69,7 @@ dev_dependencies:
   swagger_dart_code_generator: ^3.0.1
   flutter_native_splash: ^2.3.0
   translations_cleaner: ^0.0.5
+  flutter_launcher_icons: ^0.13.1
 
 flutter:
   uses-material-design: true
@@ -76,6 +77,15 @@ flutter:
 
   assets:
     - assets/images/logo.svg
+    - assets/images/waterfly_ai_final.svg
+
+flutter_launcher_icons:
+  android: true
+  ios: false
+  image_path: "assets/images/waterfly_ai_final.svg"
+  min_sdk_android: 21
+  adaptive_icon_background: "#1E88E5"
+  adaptive_icon_foreground: "assets/images/waterfly_ai_final.svg"
 
 flutter_native_splash:
   android: true

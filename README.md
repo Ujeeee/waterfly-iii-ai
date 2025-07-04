@@ -154,6 +154,38 @@ The app is built using [Flutter](https://flutter.dev/), and tries to keep to the
 
 **Result**: Back button now properly navigates between screens. AppBar back buttons continue to work as expected.
 
+## Attachment Upload Issue Fix
+
+### Problem
+
+When users tried to upload attachments to **existing/old transactions**, the app had two main issues:
+
+1. **No Preview**: Attachments showed error widgets instead of proper previews
+2. **Upload Failed**: Files weren't actually uploaded to the Firefly III server
+
+### Root Cause
+
+The `SimpleAttachmentsDialog` was designed primarily for new transactions and created "fake" local attachments for both new and existing transactions. For existing transactions, it should have uploaded files to the server immediately.
+
+### Key Differences Between New vs Existing Transactions
+
+- **New Transactions**: Use local file paths (`uploadUrl`) until the transaction is saved
+- **Existing Transactions**: Should upload immediately to server and use server URLs (`downloadUrl`)
+
+### Fix Implementation
+
+1. **Upload Logic**: Added `_uploadAttachmentToServer()` method that properly uploads files to the Firefly III API for existing transactions
+2. **Delete Logic**: Added `_deleteAttachmentFromServer()` method that deletes from server for existing transactions
+3. **Preview Logic**: The existing code already handled this correctly - it tries `downloadUrl` for server files and falls back to local temp download
+4. **Local vs Server Detection**: Added `_isLocalAttachment()` to distinguish between local-only and server-backed attachments
+
+### Changes Made
+
+- Modified `_addFromCamera()` and `_addFromFiles()` to upload immediately for existing transactions
+- Modified `_deleteAttachment()` to delete from server when appropriate
+- Added proper API integration for attachment upload/delete operations
+- Added better error handling and user feedback
+
 ## Motivation
 
 Having troubles with [Bluecoins](https://play.google.com/store/apps/details?id=com.rammigsoftware.bluecoins) syncing across devices and not always storing attachments online, I was looking for a self-hosted alternative and discovered [Firefly III](https://www.firefly-iii.org/). After a [quick script to migrate from Bluecoins to Firefly III](https://github.com/dreautall/bluecoins-to-fireflyiii), the only thing left was to download an app to easily track expenses on-the-go… or so I thought.

@@ -1,6 +1,7 @@
+import 'dart:convert';
 import 'dart:io';
 
-import 'package:chopper/chopper.dart' show HttpMethod;
+import 'package:chopper/chopper.dart' show HttpMethod, Response;
 import 'package:file_picker/file_picker.dart';
 import 'package:filesize/filesize.dart';
 import 'package:flutter/material.dart';
@@ -292,12 +293,14 @@ class _SimpleAttachmentsDialogState extends State<SimpleAttachmentsDialog> {
       // Show parsed data dialog
       if (context.mounted) {
         print(
-            'SimpleAttachmentsDialog: About to show ReceiptParseResultDialog with callback: ${widget.onTransactionDataParsed != null}');
+            'SimpleAttachmentsDialog: About to show ReceiptParseResultDialog for ${widget.transactionId != null ? 'existing' : 'new'} transaction');
         showDialog(
           context: context,
           builder: (context) => ReceiptParseResultDialog(
             transactionData: transactionData,
-            onUseData: widget.onTransactionDataParsed,
+            // Only pass the callback for new transactions
+            onUseData: widget.transactionId == null ? widget.onTransactionDataParsed : null,
+            isExistingTransaction: widget.transactionId != null,
           ),
         );
       }
@@ -367,9 +370,54 @@ class _SimpleAttachmentsDialogState extends State<SimpleAttachmentsDialog> {
     );
 
     if (confirm == true) {
+      final AttachmentRead attachment = widget.attachments[index];
+
+      if (widget.transactionId != null && !_isLocalAttachment(attachment)) {
+        // For existing transactions with server-backed attachments, delete from server
+        await _deleteAttachmentFromServer(attachment, index);
+      } else {
+        // For new transactions or locally added attachments, just remove from list
+        setState(() {
+          widget.attachments.removeAt(index);
+        });
+      }
+    }
+  }
+
+  /// Check if an attachment is only local (not on server yet)
+  bool _isLocalAttachment(AttachmentRead attachment) {
+    // Local attachments have uploadUrl but no downloadUrl, or timestamp-based IDs
+    return attachment.attributes.downloadUrl == null ||
+        attachment.id.contains(RegExp(r'^\d{13}$')); // timestamp pattern
+  }
+
+  /// Delete attachment from server for existing transactions
+  Future<void> _deleteAttachmentFromServer(
+      AttachmentRead attachment, int index) async {
+    final ScaffoldMessengerState msg = ScaffoldMessenger.of(context);
+    final FireflyIii api = context.read<FireflyService>().api;
+
+    try {
+      await api.v1AttachmentsIdDelete(id: attachment.id);
+
       setState(() {
         widget.attachments.removeAt(index);
       });
+
+      msg.showSnackBar(
+        const SnackBar(
+          content: Text('Attachment deleted successfully'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    } catch (e, stackTrace) {
+      log.severe("Error deleting attachment", e, stackTrace);
+      msg.showSnackBar(
+        SnackBar(
+          content: Text('Failed to delete attachment: ${e.toString()}'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
     }
   }
 
@@ -382,24 +430,34 @@ class _SimpleAttachmentsDialogState extends State<SimpleAttachmentsDialog> {
 
     if (imageFile == null) return;
 
-    // Create a fake attachment for demo
-    final AttachmentRead newAttachment = AttachmentRead(
-      type: "attachments",
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      attributes: Attachment(
-        attachableType: AttachableType.transactionjournal,
-        attachableId: widget.transactionId ?? "new",
-        filename: imageFile.name,
-        uploadUrl: imageFile.path,
+    if (widget.transactionId != null) {
+      // For existing transactions, upload immediately to server
+      final PlatformFile platformFile = PlatformFile(
+        path: imageFile.path,
+        name: imageFile.name,
         size: await imageFile.length(),
-        createdAt: DateTime.now(),
-      ),
-      links: const ObjectLink(),
-    );
+      );
+      await _uploadAttachmentToServer(platformFile);
+    } else {
+      // For new transactions, create a local attachment
+      final AttachmentRead newAttachment = AttachmentRead(
+        type: "attachments",
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        attributes: Attachment(
+          attachableType: AttachableType.transactionjournal,
+          attachableId: "new",
+          filename: imageFile.name,
+          uploadUrl: imageFile.path,
+          size: await imageFile.length(),
+          createdAt: DateTime.now(),
+        ),
+        links: const ObjectLink(),
+      );
 
-    setState(() {
-      widget.attachments.add(newAttachment);
-    });
+      setState(() {
+        widget.attachments.add(newAttachment);
+      });
+    }
   }
 
   void _addFromFiles() async {
@@ -409,24 +467,29 @@ class _SimpleAttachmentsDialogState extends State<SimpleAttachmentsDialog> {
     final PlatformFile file = result.files.first;
     if (file.path == null) return;
 
-    // Create a fake attachment for demo
-    final AttachmentRead newAttachment = AttachmentRead(
-      type: "attachments",
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      attributes: Attachment(
-        attachableType: AttachableType.transactionjournal,
-        attachableId: widget.transactionId ?? "new",
-        filename: file.name,
-        uploadUrl: file.path,
-        size: file.size,
-        createdAt: DateTime.now(),
-      ),
-      links: const ObjectLink(),
-    );
+    if (widget.transactionId != null) {
+      // For existing transactions, upload immediately to server
+      await _uploadAttachmentToServer(file);
+    } else {
+      // For new transactions, create a local attachment
+      final AttachmentRead newAttachment = AttachmentRead(
+        type: "attachments",
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        attributes: Attachment(
+          attachableType: AttachableType.transactionjournal,
+          attachableId: "new",
+          filename: file.name,
+          uploadUrl: file.path,
+          size: file.size,
+          createdAt: DateTime.now(),
+        ),
+        links: const ObjectLink(),
+      );
 
-    setState(() {
-      widget.attachments.add(newAttachment);
-    });
+      setState(() {
+        widget.attachments.add(newAttachment);
+      });
+    }
   }
 
   void _downloadAttachment(AttachmentRead attachment) async {
@@ -520,6 +583,130 @@ class _SimpleAttachmentsDialogState extends State<SimpleAttachmentsDialog> {
       msg.showSnackBar(
         SnackBar(
           content: Text(l10n.transactionDialogAttachmentsErrorDownload),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
+  /// Upload attachment to server for existing transactions
+  Future<void> _uploadAttachmentToServer(PlatformFile file) async {
+    final ScaffoldMessengerState msg = ScaffoldMessenger.of(context);
+    final FireflyIii api = context.read<FireflyService>().api;
+    final AuthUser? user = context.read<FireflyService>().user;
+    final S l10n = S.of(context);
+
+    if (user == null) {
+      log.severe("uploadAttachment: user was null");
+      msg.showSnackBar(
+        SnackBar(
+          content: Text(l10n.errorAPIUnavailable),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+      return;
+    }
+
+    try {
+      // Create attachment metadata on server
+      final Response<AttachmentSingle> respAttachment =
+          await api.v1AttachmentsPost(
+        body: AttachmentStore(
+          filename: file.name,
+          attachableType: AttachableType.transactionjournal,
+          attachableId: widget.transactionId!,
+        ),
+      );
+
+      if (!respAttachment.isSuccessful || respAttachment.body == null) {
+        String error;
+        try {
+          final ValidationErrorResponse valError =
+              ValidationErrorResponse.fromJson(
+            json.decode(respAttachment.error.toString()),
+          );
+          error = valError.message ?? l10n.errorUnknown;
+        } catch (_) {
+          error = l10n.errorUnknown;
+        }
+        msg.showSnackBar(
+          SnackBar(
+            content: Text('Upload failed: $error'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+        return;
+      }
+
+      final AttachmentRead newAttachment = respAttachment.body!.data;
+
+      // Show upload progress
+      msg.showSnackBar(
+        SnackBar(
+          content: Text('Uploading ${file.name}...'),
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+
+      // Upload file content
+      final http.StreamedRequest request = http.StreamedRequest(
+        HttpMethod.Post,
+        Uri.parse(newAttachment.attributes.uploadUrl!),
+      );
+      request.headers.addAll(user.headers());
+      request.headers[HttpHeaders.contentTypeHeader] =
+          ContentType.binary.mimeType;
+      request.contentLength = file.size;
+
+      // Send file data
+      File(file.path!).openRead().listen(
+        (List<int> data) {
+          request.sink.add(data);
+        },
+        onDone: () {
+          request.sink.close();
+        },
+      );
+
+      final http.StreamedResponse resp = await httpClient.send(request);
+      if (resp.statusCode == HttpStatus.ok ||
+          resp.statusCode == HttpStatus.created ||
+          resp.statusCode == HttpStatus.noContent) {
+        // Success - fetch the updated attachment with download URL
+        final Response<AttachmentSingle> updatedResp =
+            await api.v1AttachmentsIdGet(id: newAttachment.id);
+
+        if (updatedResp.isSuccessful && updatedResp.body != null) {
+          setState(() {
+            widget.attachments.add(updatedResp.body!.data);
+          });
+        } else {
+          // Fallback: add with basic info
+          final AttachmentRead finalAttachment = newAttachment.copyWith(
+            attributes: newAttachment.attributes.copyWith(
+              size: file.size,
+            ),
+          );
+
+          setState(() {
+            widget.attachments.add(finalAttachment);
+          });
+        }
+
+        msg.showSnackBar(
+          SnackBar(
+            content: Text('${file.name} uploaded successfully'),
+            behavior: SnackBarBehavior.floating,
+          ),
+        );
+      } else {
+        throw Exception('Upload failed with status: ${resp.statusCode}');
+      }
+    } catch (e, stackTrace) {
+      log.severe("Error uploading attachment", e, stackTrace);
+      msg.showSnackBar(
+        SnackBar(
+          content: Text('Upload failed: ${e.toString()}'),
           behavior: SnackBarBehavior.floating,
         ),
       );
@@ -702,12 +889,14 @@ class ReceiptParseResultDialog extends StatelessWidget {
   final TransactionData transactionData;
   final VoidCallback? onSaveImage;
   final void Function(TransactionData)? onUseData;
+  final bool isExistingTransaction;
 
   const ReceiptParseResultDialog({
     super.key,
     required this.transactionData,
     this.onSaveImage,
     this.onUseData,
+    this.isExistingTransaction = false,
   });
 
   @override
@@ -719,7 +908,10 @@ class ReceiptParseResultDialog extends StatelessWidget {
         children: [
           Icon(Icons.smart_toy, color: theme.colorScheme.primary),
           const SizedBox(width: 8),
-          const Text('AI Parsed Receipt Data'),
+          Text(isExistingTransaction 
+            ? 'Receipt Data Extracted'
+            : 'AI Parsed Receipt Data'
+          ),
         ],
       ),
       content: SizedBox(
@@ -744,7 +936,9 @@ class ReceiptParseResultDialog extends StatelessWidget {
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
-                      'This data will be used to auto-fill the transaction form',
+                      isExistingTransaction
+                        ? 'This data was extracted from the receipt attachment'
+                        : 'This data will be used to auto-fill the transaction form',
                       style: theme.textTheme.bodySmall?.copyWith(
                         color: theme.colorScheme.primary,
                       ),
@@ -821,32 +1015,70 @@ class ReceiptParseResultDialog extends StatelessWidget {
             },
             child: const Text('Save Image'),
           ),
-        FilledButton(
-          onPressed: () {
-            Navigator.of(context).pop();
-            if (onUseData != null) {
-              print(
-                  'ReceiptParseResultDialog: Calling onUseData with: $transactionData');
-              onUseData!(transactionData);
-            } else {
-              print(
-                  'ReceiptParseResultDialog: onUseData is null, showing fallback message');
-              _notifyTransactionData(context, transactionData);
-            }
-          },
-          child: const Text('Auto-Fill Transaction Form'),
-        ),
+        // Show different actions based on transaction type
+        if (isExistingTransaction)
+          FilledButton.tonal(
+            onPressed: () {
+              Navigator.of(context).pop();
+              _showExistingTransactionInfo(context, transactionData);
+            },
+            child: const Text('View Data'),
+          )
+        else
+          FilledButton(
+            onPressed: () {
+              Navigator.of(context).pop();
+              if (onUseData != null) {
+                print(
+                    'ReceiptParseResultDialog: Calling onUseData with: $transactionData');
+                onUseData!(transactionData);
+              } else {
+                print(
+                    'ReceiptParseResultDialog: onUseData is null, showing fallback message');
+                _notifyTransactionData(context, transactionData);
+              }
+            },
+            child: const Text('Auto-Fill Transaction Form'),
+          ),
       ],
     );
   }
 
   void _notifyTransactionData(BuildContext context, TransactionData data) {
     // This would need to be implemented to pass the data back to the transaction form
-    // For now, we'll just show a snackbar
+    // For new transactions, we'll just show a snackbar
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
         content: Text('Feature coming soon: Auto-fill transaction form'),
         behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  void _showExistingTransactionInfo(BuildContext context, TransactionData data) {
+    // For existing transactions, just show informational message
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Receipt data extracted successfully!',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              'This data is from an existing transaction attachment. The information shown above was extracted from the receipt image.',
+            ),
+          ],
+        ),
+        duration: const Duration(seconds: 4),
+        behavior: SnackBarBehavior.floating,
+        action: SnackBarAction(
+          label: 'OK',
+          onPressed: () => ScaffoldMessenger.of(context).hideCurrentSnackBar(),
+        ),
       ),
     );
   }
